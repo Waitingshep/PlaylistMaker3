@@ -7,4 +7,6 @@
     <dimen name="general_padding">16dp</dimen>
     <dimen name="text_padding">21dp</dimen>
     <dimen name="icon_padding_settings">-4dp</dimen>
+    <dimen name="title_margin">40dp</dimen>
+    <dimen name="title_padding_start">48dp</dimen>
 </resources>
