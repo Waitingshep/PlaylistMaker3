@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="title">22sp</dimen>
+    <dimen name="button_corner">16dp</dimen>
+    <dimen name="icon_padding_main">8dp</dimen>
+    <dimen name="text">16sp</dimen>
+    <dimen name="general_padding">16dp</dimen>
+    <dimen name="text_padding">21dp</dimen>
+    <dimen name="icon_padding_settings">-4dp</dimen>
+</resources>
