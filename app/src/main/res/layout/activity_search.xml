@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:background="?selectableItemBackgroundBorderless"
-            android:src="@drawable/arrow_back"
+            android:src="@drawable/ic_arrow_back_24"
             app:tint="@color/icon_title" />
 
         <TextView
@@ -46,7 +46,7 @@
             android:maxLength="100"
             android:textSize="@dimen/text"
             android:drawablePadding="9dp"
-            android:drawableStart="@drawable/search_mode_area"
+            android:drawableStart="@drawable/ic_search_mode_16"
             android:textColor="@color/search_text"
             android:textColorHint="@color/search_text_hint"
             android:fontFamily="@font/ys_display_regular"
@@ -58,7 +58,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end|center_vertical"
-            android:src="@drawable/cancel"
+            android:src="@drawable/ic_cancel_16"
             android:visibility="gone"
             app:tint="@color/search_icon"
             android:background="?selectableItemBackgroundBorderless"

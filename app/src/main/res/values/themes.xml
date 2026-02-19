@@ -6,8 +6,8 @@
         <item name="colorSecondary">@color/white</item>
 
         <!-- Цвет фона по умолчанию для светлой темы -->
-        <item name="android:windowBackground">@color/white</item>
-        <item name="android:colorBackground">@color/white</item>
+        <item name="android:windowBackground">@color/windowBackground</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
     </style>
 
     <style name="Theme.PlaylistMaker" parent="Base.Theme.PlaylistMaker" />

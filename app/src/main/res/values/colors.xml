@@ -11,4 +11,7 @@
     <color name="search_icon">#AEAFB4</color>
     <color name="windowBackground">#FFFFFFFF</color>
     <color name="colorBackground">#FFFFFFFF</color>
+    <color name="switch_point_color">#00D6C3</color>
+    <color name="switch_light_color">#9FBBF3</color>
+    <color name="background_main">#3772E7</color>
 </resources>

@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="?attr/colorPrimary"
+    android:background="@color/background_main"
     android:orientation="vertical"
     android:padding="@dimen/general_padding"
     tools:context=".MainActivity">
@@ -24,19 +24,19 @@
         <Button
             android:id="@+id/search_button"
             android:text="@string/search"
-            app:icon="@drawable/search_mode"
+            app:icon="@drawable/ic_search_mode_24"
             style="@style/MainActivityButtonStyle" />
 
         <Button
             android:id="@+id/media_button"
             android:text="@string/media"
-            app:icon="@drawable/media_mode"
+            app:icon="@drawable/ic_media_mode_24"
             style="@style/MainActivityButtonStyle" />
 
         <Button
             android:id="@+id/settings_button"
             android:text="@string/settings"
-            app:icon="@drawable/settings_mode"
+            app:icon="@drawable/ic_settings_mode_24"
             style="@style/MainActivityButtonStyle" />
 
     </LinearLayout>

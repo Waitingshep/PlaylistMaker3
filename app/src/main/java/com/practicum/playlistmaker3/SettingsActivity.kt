@@ -26,7 +26,7 @@ class SettingsActivity : AppCompatActivity() {
                 putExtra(Intent.EXTRA_TEXT, getString(R.string.course_url))
             }
 
-            val chooser = Intent.createChooser(shareIntent, "Поделиться через")
+            val chooser = Intent.createChooser(shareIntent, getString(R.string.share_via))
             startActivity(chooser)
         }
 

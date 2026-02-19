@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:background="?selectableItemBackgroundBorderless"
-            android:src="@drawable/arrow_back"
+            android:src="@drawable/ic_arrow_back_24"
             app:tint="@color/icon_title" />
 
         <TextView
@@ -48,6 +48,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
+            android:thumbTint="@color/switch_point_color"
+            android:trackTint="@color/switch_light_color"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
     </FrameLayout>
 
@@ -55,19 +57,19 @@
         style="@style/SettingsLinesStyle"
         android:id="@+id/share_app"
         android:text="@string/share_app"
-        app:drawableEndCompat="@drawable/share_mode" />
+        app:drawableEndCompat="@drawable/ic_share_mode_24" />
 
     <TextView
         style="@style/SettingsLinesStyle"
         android:id="@+id/message_support"
         android:text="@string/support"
-        app:drawableEndCompat="@drawable/support_mode" />
+        app:drawableEndCompat="@drawable/ic_support_mode_24" />
 
     <TextView
         style="@style/SettingsLinesStyle"
         android:id="@+id/agreement"
         android:text="@string/agreement"
-        app:drawableEndCompat="@drawable/arrow_forward" />
+        app:drawableEndCompat="@drawable/ic_arrow_forward_24" />
 
 
 </LinearLayout>
