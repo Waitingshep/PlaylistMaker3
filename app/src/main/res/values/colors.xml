@@ -6,6 +6,9 @@
     <color name="icon_color">#AEAFB4</color>
     <color name="icon_title">#FF000000</color>
     <color name="search_area">#E6E8EB</color>
-    <color name="search_text">#818C99</color>
+    <color name="search_text">#1A1B22</color>
+    <color name="search_text_hint">#AEAFB4</color>
     <color name="search_icon">#AEAFB4</color>
+    <color name="windowBackground">#FFFFFFFF</color>
+    <color name="colorBackground">#FFFFFFFF</color>
 </resources>

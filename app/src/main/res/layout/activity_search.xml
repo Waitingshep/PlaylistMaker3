@@ -48,7 +48,7 @@
             android:drawablePadding="9dp"
             android:drawableStart="@drawable/search_mode_area"
             android:textColor="@color/search_text"
-            android:textColorHint="@color/search_text"
+            android:textColorHint="@color/search_text_hint"
             android:fontFamily="@font/ys_display_regular"
             android:textFontWeight="400"
             app:drawableTint="@color/search_icon" />
