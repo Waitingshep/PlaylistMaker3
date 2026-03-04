@@ -20,11 +20,19 @@ class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         artistNameView.text = track.artistName
         trackTimeView.text = track.trackTime
 
+        // Конвертируем 2dp в пиксели
+        val cornerRadiusInPx = dpToPx(2f, itemView.context)
+
         Glide.with(itemView)
             .load(track.artworkUrl100)
             .placeholder(R.drawable.placeholder_cover)
             .error(R.drawable.placeholder_cover)
-            .transform(CenterCrop(), RoundedCorners(2))
+            .transform(CenterCrop(), RoundedCorners(cornerRadiusInPx))
             .into(artworkImageView)
+    }
+
+    // Функция для конвертации dp в px
+    private fun dpToPx(dp: Float, context: android.content.Context): Int {
+        return (dp * context.resources.displayMetrics.density).toInt()
     }
 }

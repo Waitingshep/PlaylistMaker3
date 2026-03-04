@@ -10,5 +10,5 @@
     <dimen name="title_margin">40dp</dimen>
     <dimen name="title_padding_start">48dp</dimen>
     <dimen name="search_singer">11sp</dimen>
-    <dimen name="song_pic">56dp</dimen>
+    <dimen name="song_pic">45dp</dimen>
 </resources>

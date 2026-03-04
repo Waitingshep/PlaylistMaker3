@@ -5,28 +5,30 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="@dimen/general_padding"
+    android:padding="0dp"
     tools:context=".SearchActivity">
 
     <!-- Шапка с кнопкой назад и заголовком -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/title_margin">
+        >
 
         <ImageButton
+            android:padding="@dimen/general_padding"
             android:id="@+id/back_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
             android:background="?selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back_24"
             app:tint="@color/icon_title" />
 
         <TextView
             style="@style/TitleTextStyle"
-            android:paddingStart="@dimen/title_padding_start"
+            android:paddingStart="64dp"
             android:paddingEnd="0dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="16dp"
             android:text="@string/search" />
     </FrameLayout>
 
@@ -34,7 +36,10 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="24dp">
+        android:paddingBottom="24dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="@dimen/general_padding"
+        android:paddingStart="@dimen/general_padding">
 
         <EditText
             android:id="@+id/search_edit_text"

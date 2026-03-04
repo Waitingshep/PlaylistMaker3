@@ -4,13 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="12dp">
+    android:paddingStart="0dp"
+    android:paddingEnd="0dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:background="?attr/selectableItemBackground">
 
     <!-- Изображение слева (обложка) -->
     <ImageView
         android:id="@+id/artworkUrl100"
         android:layout_width="@dimen/song_pic"
         android:layout_height="@dimen/song_pic"
+        android:layout_marginStart="13dp"
         android:scaleType="centerCrop" />
 
     <!-- Центральная часть с информацией о песне -->
@@ -58,8 +63,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/singer_point_time"
-                android:paddingLeft="2dp"
-                android:paddingRight="2dp" />
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp" />
 
             <!-- Время -->
             <TextView
@@ -72,11 +77,12 @@
 
     </LinearLayout>
 
-    <!-- Стрелка справа -->
+    <!-- Стрелка справа с отступом -->
     <ImageView
         android:id="@+id/iv_more"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
         android:src="@drawable/ic_arrow_forward_24"
         android:layout_gravity="center_vertical"
         app:tint="@color/search_arrow_forward"
