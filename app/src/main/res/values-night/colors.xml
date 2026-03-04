@@ -14,4 +14,7 @@
     <color name="switch_point_color">#3772E7</color>
     <color name="switch_light_color">#9FBBF3</color>
     <color name="background_main">#1A1B22</color>
+    <color name="song_name_search">#FFFFFF</color>
+    <color name="singer_search">#FFFFFF</color>
+    <color name="search_arrow_forward">#FFFFFF</color>
 </resources>

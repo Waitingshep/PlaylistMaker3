@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:padding="@dimen/general_padding"
     tools:context=".SearchActivity">
 
+    <!-- Шапка с кнопкой назад и заголовком -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,15 +30,17 @@
             android:text="@string/search" />
     </FrameLayout>
 
+    <!-- Поле поиска -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:paddingBottom="24dp">
 
         <EditText
-            android:paddingStart="13dp"
             android:id="@+id/search_edit_text"
             android:layout_width="match_parent"
             android:layout_height="36dp"
+            android:paddingStart="13dp"
             android:paddingEnd="40dp"
             android:background="@drawable/search_background_shape"
             android:inputType="text"
@@ -51,7 +54,8 @@
             android:textColorHint="@color/search_text_hint"
             android:fontFamily="@font/ys_display_regular"
             android:textFontWeight="400"
-            app:drawableTint="@color/search_icon" />
+            app:drawableTint="@color/search_icon"
+            android:textCursorDrawable="@drawable/blue_cursor" />
 
         <ImageButton
             android:id="@+id/clear_button"
@@ -65,5 +69,11 @@
             android:paddingStart="4dp"
             android:paddingEnd="13dp" />
     </FrameLayout>
+
+    <!-- RecyclerView для списка треков -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/tracksList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </LinearLayout>

@@ -13,4 +13,5 @@
     <string name="support_email">vikhry-tatyana@yandex.ru</string>
     <string name="agreement_url">https://yandex.ru/legal/practicum_offer/</string>
     <string name="share_via">Поделиться через</string>
+    <string name="singer_point_time"> • </string>
 </resources>
