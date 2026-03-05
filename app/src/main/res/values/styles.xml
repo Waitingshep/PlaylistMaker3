@@ -42,5 +42,14 @@
         <item name="drawableTint">@color/icon_color</item>
     </style>
 
+    <!-- Экран поиска -->
+    <!-- Строка с исполнителем -->
+    <style name="SearchSingerStyle">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">@dimen/search_singer</item>
+        <item name="android:fontFamily">@font/ys_display_regular</item>
+        <item name="android:textColor">@color/singer_search</item>
+    </style>
+
 </resources>
 

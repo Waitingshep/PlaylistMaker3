@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingStart="0dp"
+    android:paddingEnd="0dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Изображение слева (обложка) -->
+    <ImageView
+        android:id="@+id/artworkUrl100"
+        android:layout_width="@dimen/song_pic"
+        android:layout_height="@dimen/song_pic"
+        android:layout_marginStart="13dp"
+        android:scaleType="centerCrop" />
+
+    <!-- Центральная часть с информацией о песне -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <!-- Название песни -->
+        <TextView
+            android:id="@+id/trackName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text"
+            android:fontFamily="@font/ys_display_regular"
+            android:textColor="@color/song_name_search"
+            android:maxLines="1"
+            android:maxEms="15"
+            android:ellipsize="end" />
+
+        <!-- Нижняя строка с исполнителем и временем -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="1dp">
+
+            <!-- Исполнитель -->
+            <TextView
+                android:id="@+id/artistName"
+                style="@style/SearchSingerStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:maxEms="10"
+                android:ellipsize="end" />
+
+            <!-- Точка между исполнителем и временем -->
+            <TextView
+                style="@style/SearchSingerStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/singer_point_time"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp" />
+
+            <!-- Время -->
+            <TextView
+                android:id="@+id/trackTime"
+                style="@style/SearchSingerStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Стрелка справа с отступом -->
+    <ImageView
+        android:id="@+id/iv_more"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:src="@drawable/ic_arrow_forward_24"
+        android:layout_gravity="center_vertical"
+        app:tint="@color/search_arrow_forward"
+        android:background="?selectableItemBackgroundBorderless" />
+
+</LinearLayout>
