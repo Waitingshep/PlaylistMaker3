@@ -17,4 +17,7 @@
     <color name="song_name_search">#000000</color>
     <color name="singer_search">#AEAFB4</color>
     <color name="search_arrow_forward">#AEAFB4</color>
+    <color name="placeholder_text">#FF000000</color>
+    <color name="refresh_button_bg">#FF000000</color>
+    <color name="refresh_button_text">#FFFFFFFF</color>
 </resources>

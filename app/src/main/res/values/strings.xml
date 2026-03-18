@@ -14,4 +14,7 @@
     <string name="agreement_url">https://yandex.ru/legal/practicum_offer/</string>
     <string name="share_via">Поделиться через</string>
     <string name="singer_point_time"> • </string>
+    <string name="nothing_found">Ничего не нашлось</string>
+    <string name="something_went_wrong">Проблемы со связью\n\nЗагрузка не удалась. Проверьте\nподключение к интернету</string>
+    <string name="update">Обновить</string>
 </resources>
