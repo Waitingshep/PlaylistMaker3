@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 data class Track(
+    val trackId: Int, // Уникальный идентификатор трека
     val trackName: String, // Название композиции
     val artistName: String, // Имя исполнителя
     val trackTimeMillis: Long, // Продолжительность трека в миллисекундах
@@ -21,6 +22,7 @@ data class Track(
     companion object {
         fun fromItunesTrack(itunesTrack: ItunesTrack): Track {
             return Track(
+                trackId = itunesTrack.trackId ?: 0,
                 trackName = itunesTrack.trackName ?: "",
                 artistName = itunesTrack.artistName ?: "",
                 trackTimeMillis = itunesTrack.trackTimeMillis ?: 0,
