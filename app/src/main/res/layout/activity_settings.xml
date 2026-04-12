@@ -41,16 +41,18 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="0dp"
             android:layout_marginBottom="0dp"
-            android:text="@string/black_theme" />
+            android:text="@string/black_theme"
+            android:layout_gravity="center_vertical"
+            />
 
-        <Switch
-            android:id="@+id/switchDefault"
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/themeSwitcher"
+            style="@style/CompactSwitchMaterial"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:thumbTint="@color/switch_point_color"
-            android:trackTint="@color/switch_light_color"
-            tools:ignore="UseSwitchCompatOrMaterialXml" />
+            android:layout_gravity="end|center_vertical"
+            app:thumbTint="@color/switch_thumb_checked"
+            app:trackTint="@color/switch_track_checked" />
     </FrameLayout>
 
     <TextView

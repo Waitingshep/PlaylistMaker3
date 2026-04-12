@@ -11,8 +11,8 @@
     <color name="search_icon">#AEAFB4</color>
     <color name="windowBackground">#FFFFFFFF</color>
     <color name="colorBackground">#FFFFFFFF</color>
-    <color name="switch_point_color">#00D6C3</color>
-    <color name="switch_light_color">#9FBBF3</color>
+    <color name="switch_thumb_checked">#00D6C3</color>
+    <color name="switch_track_checked">#76EAE0</color>
     <color name="background_main">#3772E7</color>
     <color name="song_name_search">#000000</color>
     <color name="singer_search">#AEAFB4</color>
