@@ -23,10 +23,8 @@ class SettingsActivity : AppCompatActivity() {
             finish()
         }
 
-        // Устанавливаем состояние переключателя в соответствии с текущей темой
-        themeSwitcher.isChecked = (applicationContext as App).darkTheme
+        themeSwitcher.isChecked = (applicationContext as App).isDarkThemeEnabled()
 
-        // Обработчик переключения темы
         themeSwitcher.setOnCheckedChangeListener { switcher, checked ->
             (applicationContext as App).switchTheme(checked)
         }

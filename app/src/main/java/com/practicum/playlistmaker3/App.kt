@@ -11,20 +11,18 @@ class App : Application() {
         const val DARK_THEME_KEY = "dark_theme"
     }
 
-    var darkTheme = false
+    private var isDarkTheme = false
 
     override fun onCreate() {
         super.onCreate()
-        // Загружаем сохраненную тему из SharedPreferences
         val sharedPrefs = getSharedPreferences(THEME_PREFERENCES, Context.MODE_PRIVATE)
-        darkTheme = sharedPrefs.getBoolean(DARK_THEME_KEY, false)
+        isDarkTheme = sharedPrefs.getBoolean(DARK_THEME_KEY, false)
 
-        // Применяем сохраненную тему
-        switchTheme(darkTheme)
+        switchTheme(isDarkTheme)
     }
 
     fun switchTheme(darkThemeEnabled: Boolean) {
-        darkTheme = darkThemeEnabled
+        isDarkTheme = darkThemeEnabled
         AppCompatDelegate.setDefaultNightMode(
             if (darkThemeEnabled) {
                 AppCompatDelegate.MODE_NIGHT_YES
@@ -32,8 +30,11 @@ class App : Application() {
                 AppCompatDelegate.MODE_NIGHT_NO
             }
         )
-        // Сохраняем выбор темы
         val sharedPrefs = getSharedPreferences(THEME_PREFERENCES, Context.MODE_PRIVATE)
         sharedPrefs.edit().putBoolean(DARK_THEME_KEY, darkThemeEnabled).apply()
+    }
+
+    fun isDarkThemeEnabled(): Boolean {
+        return isDarkTheme
     }
 }
