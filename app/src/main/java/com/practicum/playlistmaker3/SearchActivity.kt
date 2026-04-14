@@ -181,6 +181,7 @@ class SearchActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         trackAdapter = TrackAdapter(emptyList()) { track ->
             addTrackToHistory(track)
+            openPlayerActivity(track)
         }
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = trackAdapter
@@ -189,9 +190,16 @@ class SearchActivity : AppCompatActivity() {
     private fun setupHistoryRecyclerView() {
         historyAdapter = TrackAdapter(emptyList()) { track ->
             addTrackToHistory(track)
+            openPlayerActivity(track)
         }
         historyRecyclerView.layoutManager = LinearLayoutManager(this)
         historyRecyclerView.adapter = historyAdapter
+    }
+
+    private fun openPlayerActivity(track: Track) {
+        val intent = android.content.Intent(this, PlayerActivity::class.java)
+        intent.putExtra(PlayerActivity.TRACK_EXTRA, track)
+        startActivity(intent)
     }
 
     private fun observeViewModel() {
