@@ -1,7 +1,10 @@
 package com.practicum.playlistmaker3
 
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -11,6 +14,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class PlayerActivity : AppCompatActivity() {
 
@@ -28,6 +33,15 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var countryLayout: ConstraintLayout
     private lateinit var countryValueTextView: TextView
     private lateinit var currentTimeTextView: TextView
+    private lateinit var playButton: ImageButton
+
+    private var mediaPlayer: MediaPlayer? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private var updateTimeRunnable: Runnable? = null
+
+    private val dateFormat: SimpleDateFormat by lazy {
+        SimpleDateFormat("mm:ss", Locale.getDefault())
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +49,9 @@ class PlayerActivity : AppCompatActivity() {
 
         initViews()
         setupBackButton()
+        setupPlayButton()
         displayTrackInfo()
+        prepareMediaPlayer()
     }
 
     private fun initViews() {
@@ -53,13 +69,92 @@ class PlayerActivity : AppCompatActivity() {
         countryLayout = findViewById(R.id.countryLayout)
         countryValueTextView = findViewById(R.id.countryValueTextView)
         currentTimeTextView = findViewById(R.id.currentTimeTextView)
+        playButton = findViewById(R.id.playButton)
     }
 
     private fun setupBackButton() {
         backButton.setOnClickListener {
+            releaseMediaPlayer()
             finish()
         }
     }
+
+    private fun setupPlayButton() {
+        playButton.setOnClickListener {
+            if (mediaPlayer?.isPlaying == true) {
+                pausePlayback()
+            } else {
+                startPlayback()
+            }
+        }
+    }
+
+    private fun prepareMediaPlayer() {
+        val track = getTrack()
+        val previewUrl = track?.previewUrl
+        if (previewUrl.isNullOrEmpty()) {
+            playButton.isEnabled = false
+            return
+        }
+
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(previewUrl)
+            prepareAsync()
+            setOnPreparedListener {
+                playButton.isEnabled = true
+            }
+            setOnCompletionListener {
+                stopPlayback()
+                currentTimeTextView.text = getString(R.string.default_track_time)
+            }
+        }
+    }
+
+    private fun startPlayback() {
+        mediaPlayer?.start()
+        playButton.setImageResource(R.drawable.ic_pause_button_100)
+        startUpdatingTime()
+    }
+
+    private fun pausePlayback() {
+        mediaPlayer?.pause()
+        playButton.setImageResource(R.drawable.ic_play_button_100)
+        stopUpdatingTime()
+    }
+
+    private fun stopPlayback() {
+        if (mediaPlayer?.isPlaying == true) {
+            mediaPlayer?.pause()
+        }
+        playButton.setImageResource(R.drawable.ic_play_button_100)
+        stopUpdatingTime()
+        mediaPlayer?.seekTo(0)
+        currentTimeTextView.text = getString(R.string.default_track_time)
+    }
+
+    private fun startUpdatingTime() {
+        stopUpdatingTime()
+        updateTimeRunnable = object : Runnable {
+            override fun run() {
+                mediaPlayer?.let { mp ->
+                    if (mp.isPlaying) {
+                        currentTimeTextView.text = formatTime(mp.currentPosition)
+                        handler.postDelayed(this, 500)
+                    }
+                }
+            }
+        }
+        handler.post(updateTimeRunnable!!)
+    }
+
+    private fun stopUpdatingTime() {
+        updateTimeRunnable?.let { handler.removeCallbacks(it) }
+        updateTimeRunnable = null
+    }
+
+    private fun formatTime(millis: Int): String = dateFormat.format(millis)
+
+    private fun getTrack(): Track? = getParcelableExtraCompat<Track>(TRACK_EXTRA)
 
     private inline fun <reified T> getParcelableExtraCompat(key: String): T? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -71,17 +166,12 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun displayTrackInfo() {
-        val track = getParcelableExtraCompat<Track>(TRACK_EXTRA)
-
-        if (track == null) {
-            finish()
-            return
-        }
+        val track = getTrack() ?: run { finish(); return }
 
         trackNameTextView.text = track.trackName
         artistNameTextView.text = track.artistName
         durationValueTextView.text = track.formattedTime
-        currentTimeTextView.text = getString(R.string.default_track_time)  // вместо "0:00"
+        currentTimeTextView.text = getString(R.string.default_track_time)
 
         val cornerRadiusPx = dpToPx(8f)
         val coverUrl = track.getCoverArtwork()
@@ -98,38 +188,46 @@ class PlayerActivity : AppCompatActivity() {
                 .into(coverImageView)
         }
 
-        if (!track.collectionName.isNullOrEmpty()) {
-            albumLayout.visibility = View.VISIBLE
+        albumLayout.visibility = if (!track.collectionName.isNullOrEmpty()) {
             albumValueTextView.text = track.collectionName
-        } else {
-            albumLayout.visibility = View.GONE
-        }
+            View.VISIBLE
+        } else View.GONE
 
-        if (!track.releaseYear.isNullOrEmpty()) {
-            yearLayout.visibility = View.VISIBLE
+        yearLayout.visibility = if (!track.releaseYear.isNullOrEmpty()) {
             yearValueTextView.text = track.releaseYear
-        } else {
-            yearLayout.visibility = View.GONE
-        }
+            View.VISIBLE
+        } else View.GONE
 
-        if (!track.primaryGenreName.isNullOrEmpty()) {
-            genreLayout.visibility = View.VISIBLE
+        genreLayout.visibility = if (!track.primaryGenreName.isNullOrEmpty()) {
             genreValueTextView.text = track.primaryGenreName
-        } else {
-            genreLayout.visibility = View.GONE
-        }
+            View.VISIBLE
+        } else View.GONE
 
-        if (!track.country.isNullOrEmpty()) {
-            countryLayout.visibility = View.VISIBLE
+        countryLayout.visibility = if (!track.country.isNullOrEmpty()) {
             countryValueTextView.text = track.country
-        } else {
-            countryLayout.visibility = View.GONE
+            View.VISIBLE
+        } else View.GONE
+    }
+
+    private fun releaseMediaPlayer() {
+        stopUpdatingTime()
+        mediaPlayer?.release()
+        mediaPlayer = null
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (mediaPlayer?.isPlaying == true) {
+            pausePlayback()
         }
     }
 
-    private fun dpToPx(dp: Float): Int {
-        return (dp * resources.displayMetrics.density).toInt()
+    override fun onDestroy() {
+        super.onDestroy()
+        releaseMediaPlayer()
     }
+
+    private fun dpToPx(dp: Float): Int = (dp * resources.displayMetrics.density).toInt()
 
     companion object {
         const val TRACK_EXTRA = "track_extra"
