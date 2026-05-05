@@ -61,13 +61,17 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun displayTrackInfo() {
-        val track = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(TRACK_EXTRA, Track::class.java)
+    private inline fun <reified T> getParcelableExtraCompat(key: String): T? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(key, T::class.java)
         } else {
             @Suppress("DEPRECATION")
-            intent.getParcelableExtra(TRACK_EXTRA)
+            intent.getParcelableExtra(key)
         }
+    }
+
+    private fun displayTrackInfo() {
+        val track = getParcelableExtraCompat<Track>(TRACK_EXTRA)
 
         if (track == null) {
             finish()
@@ -77,7 +81,7 @@ class PlayerActivity : AppCompatActivity() {
         trackNameTextView.text = track.trackName
         artistNameTextView.text = track.artistName
         durationValueTextView.text = track.formattedTime
-        currentTimeTextView.text = "0:00"
+        currentTimeTextView.text = getString(R.string.default_track_time)  // вместо "0:00"
 
         val cornerRadiusPx = dpToPx(8f)
         val coverUrl = track.getCoverArtwork()
