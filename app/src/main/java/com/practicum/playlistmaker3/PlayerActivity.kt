@@ -36,9 +36,12 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var playButton: ImageButton
 
     private var mediaPlayer: MediaPlayer? = null
-    private var isPlaying = false
     private val handler = Handler(Looper.getMainLooper())
     private var updateTimeRunnable: Runnable? = null
+
+    private val dateFormat: SimpleDateFormat by lazy {
+        SimpleDateFormat("mm:ss", Locale.getDefault())
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,7 +81,7 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun setupPlayButton() {
         playButton.setOnClickListener {
-            if (isPlaying) {
+            if (mediaPlayer?.isPlaying == true) {
                 pausePlayback()
             } else {
                 startPlayback()
@@ -90,7 +93,6 @@ class PlayerActivity : AppCompatActivity() {
         val track = getTrack()
         val previewUrl = track?.previewUrl
         if (previewUrl.isNullOrEmpty()) {
-            // Нет preview – блокируем кнопку
             playButton.isEnabled = false
             return
         }
@@ -100,10 +102,8 @@ class PlayerActivity : AppCompatActivity() {
             prepareAsync()
             setOnPreparedListener {
                 playButton.isEnabled = true
-                // Можно также установить продолжительность, но она не нужна для отображения
             }
             setOnCompletionListener {
-                // По окончании трека
                 stopPlayback()
                 currentTimeTextView.text = getString(R.string.default_track_time)
             }
@@ -112,27 +112,24 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun startPlayback() {
         mediaPlayer?.start()
-        isPlaying = true
         playButton.setImageResource(R.drawable.ic_pause_button_100)
         startUpdatingTime()
     }
 
     private fun pausePlayback() {
         mediaPlayer?.pause()
-        isPlaying = false
         playButton.setImageResource(R.drawable.ic_play_button_100)
         stopUpdatingTime()
     }
 
     private fun stopPlayback() {
-        if (isPlaying) {
+        if (mediaPlayer?.isPlaying == true) {
             mediaPlayer?.pause()
-            isPlaying = false
-            playButton.setImageResource(R.drawable.ic_play_button_100)
-            stopUpdatingTime()
-            mediaPlayer?.seekTo(0)
-            currentTimeTextView.text = getString(R.string.default_track_time)
         }
+        playButton.setImageResource(R.drawable.ic_play_button_100)
+        stopUpdatingTime()
+        mediaPlayer?.seekTo(0)
+        currentTimeTextView.text = getString(R.string.default_track_time)
     }
 
     private fun startUpdatingTime() {
@@ -141,8 +138,7 @@ class PlayerActivity : AppCompatActivity() {
             override fun run() {
                 mediaPlayer?.let { mp ->
                     if (mp.isPlaying) {
-                        val currentPosition = mp.currentPosition
-                        currentTimeTextView.text = formatTime(currentPosition)
+                        currentTimeTextView.text = formatTime(mp.currentPosition)
                         handler.postDelayed(this, 500)
                     }
                 }
@@ -156,13 +152,9 @@ class PlayerActivity : AppCompatActivity() {
         updateTimeRunnable = null
     }
 
-    private fun formatTime(millis: Int): String {
-        return SimpleDateFormat("mm:ss", Locale.getDefault()).format(millis)
-    }
+    private fun formatTime(millis: Int): String = dateFormat.format(millis)
 
-    private fun getTrack(): Track? {
-        return getParcelableExtraCompat<Track>(TRACK_EXTRA)
-    }
+    private fun getTrack(): Track? = getParcelableExtraCompat<Track>(TRACK_EXTRA)
 
     private inline fun <reified T> getParcelableExtraCompat(key: String): T? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -174,11 +166,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun displayTrackInfo() {
-        val track = getTrack()
-        if (track == null) {
-            finish()
-            return
-        }
+        val track = getTrack() ?: run { finish(); return }
 
         trackNameTextView.text = track.trackName
         artistNameTextView.text = track.artistName
@@ -200,33 +188,25 @@ class PlayerActivity : AppCompatActivity() {
                 .into(coverImageView)
         }
 
-        if (!track.collectionName.isNullOrEmpty()) {
-            albumLayout.visibility = View.VISIBLE
+        albumLayout.visibility = if (!track.collectionName.isNullOrEmpty()) {
             albumValueTextView.text = track.collectionName
-        } else {
-            albumLayout.visibility = View.GONE
-        }
+            View.VISIBLE
+        } else View.GONE
 
-        if (!track.releaseYear.isNullOrEmpty()) {
-            yearLayout.visibility = View.VISIBLE
+        yearLayout.visibility = if (!track.releaseYear.isNullOrEmpty()) {
             yearValueTextView.text = track.releaseYear
-        } else {
-            yearLayout.visibility = View.GONE
-        }
+            View.VISIBLE
+        } else View.GONE
 
-        if (!track.primaryGenreName.isNullOrEmpty()) {
-            genreLayout.visibility = View.VISIBLE
+        genreLayout.visibility = if (!track.primaryGenreName.isNullOrEmpty()) {
             genreValueTextView.text = track.primaryGenreName
-        } else {
-            genreLayout.visibility = View.GONE
-        }
+            View.VISIBLE
+        } else View.GONE
 
-        if (!track.country.isNullOrEmpty()) {
-            countryLayout.visibility = View.VISIBLE
+        countryLayout.visibility = if (!track.country.isNullOrEmpty()) {
             countryValueTextView.text = track.country
-        } else {
-            countryLayout.visibility = View.GONE
-        }
+            View.VISIBLE
+        } else View.GONE
     }
 
     private fun releaseMediaPlayer() {
@@ -237,8 +217,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        // При уходе в фон паузируем воспроизведение
-        if (isPlaying) {
+        if (mediaPlayer?.isPlaying == true) {
             pausePlayback()
         }
     }
@@ -248,9 +227,7 @@ class PlayerActivity : AppCompatActivity() {
         releaseMediaPlayer()
     }
 
-    private fun dpToPx(dp: Float): Int {
-        return (dp * resources.displayMetrics.density).toInt()
-    }
+    private fun dpToPx(dp: Float): Int = (dp * resources.displayMetrics.density).toInt()
 
     companion object {
         const val TRACK_EXTRA = "track_extra"

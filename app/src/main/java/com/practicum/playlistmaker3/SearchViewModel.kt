@@ -26,21 +26,21 @@ class SearchViewModel(private val repository: TrackRepository) : ViewModel() {
     private var searchJob: Job? = null
 
     fun searchDebounce(query: String) {
+        searchJob?.cancel()
+
         if (query.isBlank()) {
             _searchState.value = SearchState.Empty
             return
         }
 
         lastQuery = query
-
-        searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            delay(2000L) // 2 секунды
+            delay(2000L)
             executeSearch(query)
         }
     }
 
-    private fun executeSearch(query: String) {
+    private suspend fun executeSearch(query: String) {
         if (query.isBlank()) {
             _searchState.value = SearchState.Empty
             return
@@ -48,30 +48,25 @@ class SearchViewModel(private val repository: TrackRepository) : ViewModel() {
 
         _searchState.value = SearchState.Loading
 
-        viewModelScope.launch {
-            val result = repository.searchTracks(query)
+        val result = repository.searchTracks(query)
 
-            result.fold(
-                onSuccess = { tracks ->
-                    if (tracks.isEmpty()) {
-                        _searchState.value = SearchState.Empty
-                    } else {
-                        _searchState.value = SearchState.Content(tracks)
-                    }
-                },
-                onFailure = { exception ->
-                    exception.printStackTrace()
-                    _searchState.value = SearchState.Error
-                }
-            )
-        }
+        result.fold(
+            onSuccess = { tracks ->
+                _searchState.value = if (tracks.isEmpty()) SearchState.Empty else SearchState.Content(tracks)
+            },
+            onFailure = {
+                it.printStackTrace()
+                _searchState.value = SearchState.Error
+            }
+        )
     }
 
     fun retryLastSearch() {
         if (lastQuery.isNotBlank()) {
-            // Отменяем текущий дебаунс и сразу выполняем поиск
             searchJob?.cancel()
-            executeSearch(lastQuery)
+            viewModelScope.launch {
+                executeSearch(lastQuery)
+            }
         }
     }
 

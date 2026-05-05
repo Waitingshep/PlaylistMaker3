@@ -45,6 +45,11 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var viewModel: SearchViewModel
     private var searchText: String = ""
 
+    private companion object Constants {
+        const val SEARCH_TEXT_KEY = "SEARCH_TEXT"
+        const val CLICK_DEBOUNCE_DELAY = 300L
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
@@ -53,7 +58,7 @@ class SearchActivity : AppCompatActivity() {
         initSearchHistory()
         setupViewModel()
         setupListeners()
-        setupSearchTextWatcher() // вместо setupEditorActionListener
+        setupSearchTextWatcher()
         setupFocusChangeListener()
         setupRecyclerView()
         setupHistoryRecyclerView()
@@ -124,8 +129,14 @@ class SearchActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 clearButton.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
                 searchText = s?.toString() ?: ""
+
+                // Если текст не пустой – убираем старые результаты (список, плейсхолдеры)
+                if (!searchText.isNullOrEmpty()) {
+                    clearSearchResults()
+                }
+
                 updateHistoryVisibility()
-                viewModel.searchDebounce(searchText) // вызываем debounce
+                viewModel.searchDebounce(searchText)
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -161,7 +172,6 @@ class SearchActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        // Добавляем debounce на клик, чтобы не открывалось несколько плееров
         trackAdapter = TrackAdapter(emptyList()) { track ->
             addTrackToHistory(track)
             openPlayerActivityWithDebounce(track)
@@ -179,11 +189,10 @@ class SearchActivity : AppCompatActivity() {
         historyRecyclerView.adapter = historyAdapter
     }
 
-    // Простой debounce на открытие плеера (200 мс)
     private var lastClickTime = 0L
     private fun openPlayerActivityWithDebounce(track: Track) {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastClickTime > 300) { // 300 мс между кликами
+        if (currentTime - lastClickTime > CLICK_DEBOUNCE_DELAY) {
             lastClickTime = currentTime
             val intent = android.content.Intent(this, PlayerActivity::class.java)
             intent.putExtra(PlayerActivity.TRACK_EXTRA, track)
@@ -258,9 +267,5 @@ class SearchActivity : AppCompatActivity() {
         super.onRestoreInstanceState(savedInstanceState)
         val savedText = savedInstanceState.getString(SEARCH_TEXT_KEY, "")
         searchEditText.setText(savedText)
-    }
-
-    companion object {
-        private const val SEARCH_TEXT_KEY = "SEARCH_TEXT"
     }
 }
