@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
@@ -37,7 +36,7 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var trackAdapter: TrackAdapter
 
     // Элементы истории
-    private lateinit var historyContainer: ScrollView  // Изменено с LinearLayout на ScrollView
+    private lateinit var historyContainer: ScrollView
     private lateinit var historyRecyclerView: RecyclerView
     private lateinit var clearHistoryButton: Button
     private lateinit var historyAdapter: TrackAdapter
@@ -54,9 +53,8 @@ class SearchActivity : AppCompatActivity() {
         initSearchHistory()
         setupViewModel()
         setupListeners()
-        setupSearchTextWatcher()
+        setupSearchTextWatcher() // вместо setupEditorActionListener
         setupFocusChangeListener()
-        setupEditorActionListener()
         setupRecyclerView()
         setupHistoryRecyclerView()
         observeViewModel()
@@ -74,8 +72,7 @@ class SearchActivity : AppCompatActivity() {
         placeholderEmpty = findViewById(R.id.placeholderEmpty)
         refreshButton = placeholderError.findViewById(R.id.refreshButton)
 
-        // Инициализация элементов истории
-        historyContainer = findViewById(R.id.historyScrollView)  // Теперь это ScrollView
+        historyContainer = findViewById(R.id.historyScrollView)
         historyRecyclerView = findViewById(R.id.historyRecyclerView)
         clearHistoryButton = findViewById(R.id.clearHistoryButton)
     }
@@ -120,25 +117,15 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupEditorActionListener() {
-        searchEditText.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                performSearch()
-                true
-            }
-            false
-        }
-    }
-
     private fun setupSearchTextWatcher() {
         searchEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 clearButton.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
                 searchText = s?.toString() ?: ""
                 updateHistoryVisibility()
+                viewModel.searchDebounce(searchText) // вызываем debounce
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -168,20 +155,16 @@ class SearchActivity : AppCompatActivity() {
         updateHistoryVisibility()
     }
 
-    private fun performSearch() {
-        hideKeyboard()
-        viewModel.searchTracks(searchText)
-    }
-
     private fun clearSearchResults() {
         trackAdapter.updateTracks(emptyList())
         showPlaceholders(isError = false, isEmpty = false)
     }
 
     private fun setupRecyclerView() {
+        // Добавляем debounce на клик, чтобы не открывалось несколько плееров
         trackAdapter = TrackAdapter(emptyList()) { track ->
             addTrackToHistory(track)
-            openPlayerActivity(track)
+            openPlayerActivityWithDebounce(track)
         }
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = trackAdapter
@@ -190,16 +173,22 @@ class SearchActivity : AppCompatActivity() {
     private fun setupHistoryRecyclerView() {
         historyAdapter = TrackAdapter(emptyList()) { track ->
             addTrackToHistory(track)
-            openPlayerActivity(track)
+            openPlayerActivityWithDebounce(track)
         }
         historyRecyclerView.layoutManager = LinearLayoutManager(this)
         historyRecyclerView.adapter = historyAdapter
     }
 
-    private fun openPlayerActivity(track: Track) {
-        val intent = android.content.Intent(this, PlayerActivity::class.java)
-        intent.putExtra(PlayerActivity.TRACK_EXTRA, track)
-        startActivity(intent)
+    // Простой debounce на открытие плеера (200 мс)
+    private var lastClickTime = 0L
+    private fun openPlayerActivityWithDebounce(track: Track) {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastClickTime > 300) { // 300 мс между кликами
+            lastClickTime = currentTime
+            val intent = android.content.Intent(this, PlayerActivity::class.java)
+            intent.putExtra(PlayerActivity.TRACK_EXTRA, track)
+            startActivity(intent)
+        }
     }
 
     private fun observeViewModel() {

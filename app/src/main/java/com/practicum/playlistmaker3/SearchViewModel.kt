@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.playlistmaker3.Track
 import com.practicum.playlistmaker3.data.repository.TrackRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 sealed class SearchState {
@@ -21,14 +23,29 @@ class SearchViewModel(private val repository: TrackRepository) : ViewModel() {
     val searchState: LiveData<SearchState> = _searchState
 
     private var lastQuery: String = ""
+    private var searchJob: Job? = null
 
-    fun searchTracks(query: String) {
+    fun searchDebounce(query: String) {
         if (query.isBlank()) {
             _searchState.value = SearchState.Empty
             return
         }
 
         lastQuery = query
+
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(2000L) // 2 секунды
+            executeSearch(query)
+        }
+    }
+
+    private fun executeSearch(query: String) {
+        if (query.isBlank()) {
+            _searchState.value = SearchState.Empty
+            return
+        }
+
         _searchState.value = SearchState.Loading
 
         viewModelScope.launch {
@@ -52,7 +69,14 @@ class SearchViewModel(private val repository: TrackRepository) : ViewModel() {
 
     fun retryLastSearch() {
         if (lastQuery.isNotBlank()) {
-            searchTracks(lastQuery)
+            // Отменяем текущий дебаунс и сразу выполняем поиск
+            searchJob?.cancel()
+            executeSearch(lastQuery)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        searchJob?.cancel()
     }
 }

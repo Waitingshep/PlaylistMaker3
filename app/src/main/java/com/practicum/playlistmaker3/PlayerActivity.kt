@@ -1,7 +1,10 @@
 package com.practicum.playlistmaker3
 
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -11,6 +14,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class PlayerActivity : AppCompatActivity() {
 
@@ -28,6 +33,12 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var countryLayout: ConstraintLayout
     private lateinit var countryValueTextView: TextView
     private lateinit var currentTimeTextView: TextView
+    private lateinit var playButton: ImageButton
+
+    private var mediaPlayer: MediaPlayer? = null
+    private var isPlaying = false
+    private val handler = Handler(Looper.getMainLooper())
+    private var updateTimeRunnable: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +46,9 @@ class PlayerActivity : AppCompatActivity() {
 
         initViews()
         setupBackButton()
+        setupPlayButton()
         displayTrackInfo()
+        prepareMediaPlayer()
     }
 
     private fun initViews() {
@@ -53,12 +66,102 @@ class PlayerActivity : AppCompatActivity() {
         countryLayout = findViewById(R.id.countryLayout)
         countryValueTextView = findViewById(R.id.countryValueTextView)
         currentTimeTextView = findViewById(R.id.currentTimeTextView)
+        playButton = findViewById(R.id.playButton)
     }
 
     private fun setupBackButton() {
         backButton.setOnClickListener {
+            releaseMediaPlayer()
             finish()
         }
+    }
+
+    private fun setupPlayButton() {
+        playButton.setOnClickListener {
+            if (isPlaying) {
+                pausePlayback()
+            } else {
+                startPlayback()
+            }
+        }
+    }
+
+    private fun prepareMediaPlayer() {
+        val track = getTrack()
+        val previewUrl = track?.previewUrl
+        if (previewUrl.isNullOrEmpty()) {
+            // Нет preview – блокируем кнопку
+            playButton.isEnabled = false
+            return
+        }
+
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(previewUrl)
+            prepareAsync()
+            setOnPreparedListener {
+                playButton.isEnabled = true
+                // Можно также установить продолжительность, но она не нужна для отображения
+            }
+            setOnCompletionListener {
+                // По окончании трека
+                stopPlayback()
+                currentTimeTextView.text = getString(R.string.default_track_time)
+            }
+        }
+    }
+
+    private fun startPlayback() {
+        mediaPlayer?.start()
+        isPlaying = true
+        playButton.setImageResource(R.drawable.ic_pause_button_100)
+        startUpdatingTime()
+    }
+
+    private fun pausePlayback() {
+        mediaPlayer?.pause()
+        isPlaying = false
+        playButton.setImageResource(R.drawable.ic_play_button_100)
+        stopUpdatingTime()
+    }
+
+    private fun stopPlayback() {
+        if (isPlaying) {
+            mediaPlayer?.pause()
+            isPlaying = false
+            playButton.setImageResource(R.drawable.ic_play_button_100)
+            stopUpdatingTime()
+            mediaPlayer?.seekTo(0)
+            currentTimeTextView.text = getString(R.string.default_track_time)
+        }
+    }
+
+    private fun startUpdatingTime() {
+        stopUpdatingTime()
+        updateTimeRunnable = object : Runnable {
+            override fun run() {
+                mediaPlayer?.let { mp ->
+                    if (mp.isPlaying) {
+                        val currentPosition = mp.currentPosition
+                        currentTimeTextView.text = formatTime(currentPosition)
+                        handler.postDelayed(this, 500)
+                    }
+                }
+            }
+        }
+        handler.post(updateTimeRunnable!!)
+    }
+
+    private fun stopUpdatingTime() {
+        updateTimeRunnable?.let { handler.removeCallbacks(it) }
+        updateTimeRunnable = null
+    }
+
+    private fun formatTime(millis: Int): String {
+        return SimpleDateFormat("mm:ss", Locale.getDefault()).format(millis)
+    }
+
+    private fun getTrack(): Track? {
+        return getParcelableExtraCompat<Track>(TRACK_EXTRA)
     }
 
     private inline fun <reified T> getParcelableExtraCompat(key: String): T? {
@@ -71,8 +174,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun displayTrackInfo() {
-        val track = getParcelableExtraCompat<Track>(TRACK_EXTRA)
-
+        val track = getTrack()
         if (track == null) {
             finish()
             return
@@ -81,7 +183,7 @@ class PlayerActivity : AppCompatActivity() {
         trackNameTextView.text = track.trackName
         artistNameTextView.text = track.artistName
         durationValueTextView.text = track.formattedTime
-        currentTimeTextView.text = getString(R.string.default_track_time)  // вместо "0:00"
+        currentTimeTextView.text = getString(R.string.default_track_time)
 
         val cornerRadiusPx = dpToPx(8f)
         val coverUrl = track.getCoverArtwork()
@@ -125,6 +227,25 @@ class PlayerActivity : AppCompatActivity() {
         } else {
             countryLayout.visibility = View.GONE
         }
+    }
+
+    private fun releaseMediaPlayer() {
+        stopUpdatingTime()
+        mediaPlayer?.release()
+        mediaPlayer = null
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // При уходе в фон паузируем воспроизведение
+        if (isPlaying) {
+            pausePlayback()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        releaseMediaPlayer()
     }
 
     private fun dpToPx(dp: Float): Int {
