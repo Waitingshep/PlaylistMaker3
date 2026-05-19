@@ -2,11 +2,11 @@ package com.practicum.playlistmaker3.data.repository
 
 import android.content.SharedPreferences
 import com.practicum.playlistmaker3.domain.models.ThemeMode
-import com.practicum.playlistmaker3.domain.repository.IThemeRepository
+import com.practicum.playlistmaker3.domain.repository.ThemeRepository
 
 class ThemeRepositoryImpl(
     private val sharedPreferences: SharedPreferences
-) : IThemeRepository {
+) : ThemeRepository {
 
     private val themeKey = "dark_theme"
 

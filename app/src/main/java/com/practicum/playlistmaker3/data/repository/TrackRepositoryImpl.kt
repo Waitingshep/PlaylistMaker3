@@ -2,13 +2,13 @@ package com.practicum.playlistmaker3.data.repository
 
 import com.practicum.playlistmaker3.data.network.ItunesApiService
 import com.practicum.playlistmaker3.domain.models.Track
-import com.practicum.playlistmaker3.domain.repository.ITrackRepository
+import com.practicum.playlistmaker3.domain.repository.TrackRepository
 import retrofit2.HttpException
 import java.io.IOException
 
-class TrackRepository(
+class TrackRepositoryImpl(
     private val apiService: ItunesApiService
-) : ITrackRepository {
+) : TrackRepository {
 
     override suspend fun searchTracks(query: String): Result<List<Track>> {
         return try {

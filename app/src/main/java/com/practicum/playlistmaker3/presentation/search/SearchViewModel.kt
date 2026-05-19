@@ -4,13 +4,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.playlistmaker3.domain.usecase.ISearchTracksUseCase
+import com.practicum.playlistmaker3.domain.usecase.SearchTracksUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SearchViewModel(
-    private val searchTracksUseCase: ISearchTracksUseCase
+    private val searchTracksUseCase: SearchTracksUseCase
 ) : ViewModel() {
 
     private val _searchState = MutableLiveData<SearchState>()

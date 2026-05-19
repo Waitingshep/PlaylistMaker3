@@ -4,11 +4,11 @@ import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.practicum.playlistmaker3.domain.models.Track
-import com.practicum.playlistmaker3.domain.repository.ISearchHistoryRepository
+import com.practicum.playlistmaker3.domain.repository.SearchHistoryRepository
 
 class SearchHistoryRepositoryImpl(
     private val sharedPreferences: SharedPreferences
-) : ISearchHistoryRepository {
+) : SearchHistoryRepository {
 
     private val gson = Gson()
     private val historyKey = "search_history"
