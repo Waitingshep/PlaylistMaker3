@@ -1,8 +1,11 @@
-package com.practicum.playlistmaker3
+package com.practicum.playlistmaker3.presentation.common
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.practicum.playlistmaker3.R
+import com.practicum.playlistmaker3.presentation.common.TrackViewHolder
+import com.practicum.playlistmaker3.domain.models.Track
 
 class TrackAdapter(
     private var tracks: List<Track>,

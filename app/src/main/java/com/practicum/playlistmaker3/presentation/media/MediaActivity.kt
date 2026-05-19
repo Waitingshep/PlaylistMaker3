@@ -1,8 +1,9 @@
-package com.practicum.playlistmaker3
+package com.practicum.playlistmaker3.presentation.media
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import com.practicum.playlistmaker3.R
 
 class MediaActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -1,6 +1,6 @@
 package com.practicum.playlistmaker3.data.network
 
-import com.practicum.playlistmaker3.data.models.TrackResponse
+import com.practicum.playlistmaker3.data.dto.TrackResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
