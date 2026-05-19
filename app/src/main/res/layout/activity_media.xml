@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:padding="@dimen/general_padding"
-    tools:context=".MediaActivity">
+    tools:context=".presentation.media.MediaActivity">
 
     <TextView
         android:text="@string/media"

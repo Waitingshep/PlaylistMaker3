@@ -1,7 +1,7 @@
-package com.practicum.playlistmaker3
+package com.practicum.playlistmaker3.domain.models
 
 import android.os.Parcelable
-import com.practicum.playlistmaker3.data.models.ItunesTrack
+import com.practicum.playlistmaker3.data.dto.ItunesTrack
 import kotlinx.parcelize.Parcelize
 import java.text.SimpleDateFormat
 import java.util.Locale

@@ -1,16 +1,22 @@
-package com.practicum.playlistmaker3
+package com.practicum.playlistmaker3.presentation.settings
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.TextView
-import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.switchmaterial.SwitchMaterial
+import com.practicum.playlistmaker3.App
+import com.practicum.playlistmaker3.R
+import com.practicum.playlistmaker3.domain.models.ThemeMode
+import com.practicum.playlistmaker3.presentation.common.Creator
 
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var themeSwitcher: SwitchMaterial
+    private val getThemeUseCase by lazy { Creator.provideGetThemeUseCase() }
+    private val setThemeUseCase by lazy { Creator.provideSetThemeUseCase() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,44 +29,41 @@ class SettingsActivity : AppCompatActivity() {
             finish()
         }
 
-        themeSwitcher.isChecked = (applicationContext as App).isDarkThemeEnabled()
+        val currentTheme = getThemeUseCase()
+        themeSwitcher.isChecked = currentTheme == ThemeMode.DARK
 
-        themeSwitcher.setOnCheckedChangeListener { switcher, checked ->
-            (applicationContext as App).switchTheme(checked)
+        themeSwitcher.setOnCheckedChangeListener { _, isChecked ->
+            val newMode = if (isChecked) ThemeMode.DARK else ThemeMode.LIGHT
+            setThemeUseCase(newMode)
+            (applicationContext as App).switchTheme(isChecked)
         }
 
         val shareTextView = findViewById<TextView>(R.id.share_app)
-
         shareTextView.setOnClickListener {
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_TEXT, getString(R.string.course_url))
             }
-
-            val chooser = Intent.createChooser(shareIntent, getString(R.string.share_via))
-            startActivity(chooser)
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.share_via)))
         }
 
         val supportTextView = findViewById<TextView>(R.id.message_support)
-
         supportTextView.setOnClickListener {
             val message = getString(R.string.support_message)
             val subject = getString(R.string.support_subject)
-
-            val supportIntent = Intent(Intent.ACTION_SENDTO)
-            supportIntent.data = Uri.parse("mailto:")
-            supportIntent.putExtra(Intent.EXTRA_EMAIL, arrayOf(getString(R.string.support_email)))
-            supportIntent.putExtra(Intent.EXTRA_TEXT, message)
-            supportIntent.putExtra(Intent.EXTRA_SUBJECT, subject)
+            val supportIntent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("mailto:")
+                putExtra(Intent.EXTRA_EMAIL, arrayOf(getString(R.string.support_email)))
+                putExtra(Intent.EXTRA_TEXT, message)
+                putExtra(Intent.EXTRA_SUBJECT, subject)
+            }
             startActivity(supportIntent)
         }
 
         val agreementTextView = findViewById<TextView>(R.id.agreement)
-
         agreementTextView.setOnClickListener {
             val agreementUrl = getString(R.string.agreement_url)
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(agreementUrl))
-            startActivity(browserIntent)
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(agreementUrl)))
         }
     }
 }

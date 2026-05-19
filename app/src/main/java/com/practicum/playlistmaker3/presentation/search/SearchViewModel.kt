@@ -1,23 +1,17 @@
-package com.practicum.playlistmaker3.presentation
+package com.practicum.playlistmaker3.presentation.search
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.playlistmaker3.Track
-import com.practicum.playlistmaker3.data.repository.TrackRepository
+import com.practicum.playlistmaker3.domain.usecase.SearchTracksUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-sealed class SearchState {
-    object Loading : SearchState()
-    data class Content(val tracks: List<Track>) : SearchState()
-    object Empty : SearchState()
-    object Error : SearchState()
-}
-
-class SearchViewModel(private val repository: TrackRepository) : ViewModel() {
+class SearchViewModel(
+    private val searchTracksUseCase: SearchTracksUseCase
+) : ViewModel() {
 
     private val _searchState = MutableLiveData<SearchState>()
     val searchState: LiveData<SearchState> = _searchState
@@ -27,12 +21,10 @@ class SearchViewModel(private val repository: TrackRepository) : ViewModel() {
 
     fun searchDebounce(query: String) {
         searchJob?.cancel()
-
         if (query.isBlank()) {
             _searchState.value = SearchState.Empty
             return
         }
-
         lastQuery = query
         searchJob = viewModelScope.launch {
             delay(2000L)
@@ -45,17 +37,13 @@ class SearchViewModel(private val repository: TrackRepository) : ViewModel() {
             _searchState.value = SearchState.Empty
             return
         }
-
         _searchState.value = SearchState.Loading
-
-        val result = repository.searchTracks(query)
-
+        val result = searchTracksUseCase(query)
         result.fold(
             onSuccess = { tracks ->
                 _searchState.value = if (tracks.isEmpty()) SearchState.Empty else SearchState.Content(tracks)
             },
             onFailure = {
-                it.printStackTrace()
                 _searchState.value = SearchState.Error
             }
         )

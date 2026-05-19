@@ -1,12 +1,15 @@
-package com.practicum.playlistmaker3
+package com.practicum.playlistmaker3.presentation.common
 
+import android.content.Context
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.practicum.playlistmaker3.R
+import com.practicum.playlistmaker3.domain.models.Track
 
 class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -32,7 +35,7 @@ class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     }
 
     // Функция для конвертации dp в px
-    private fun dpToPx(dp: Float, context: android.content.Context): Int {
+    private fun dpToPx(dp: Float, context: Context): Int {
         return (dp * context.resources.displayMetrics.density).toInt()
     }
 }

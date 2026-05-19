@@ -1,17 +1,14 @@
-package com.practicum.playlistmaker3.presentation
+package com.practicum.playlistmaker3.presentation.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.practicum.playlistmaker3.data.repository.TrackRepository
+import com.practicum.playlistmaker3.presentation.common.Creator
 
-class SearchViewModelFactory(
-    private val repository: TrackRepository
-) : ViewModelProvider.Factory {
-
+class SearchViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return SearchViewModel(repository) as T
+            return SearchViewModel(Creator.provideSearchTracksUseCase()) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

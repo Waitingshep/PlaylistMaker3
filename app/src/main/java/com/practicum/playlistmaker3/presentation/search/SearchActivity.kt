@@ -1,4 +1,4 @@
-package com.practicum.playlistmaker3
+package com.practicum.playlistmaker3.presentation.search
 
 import android.content.Context
 import android.os.Bundle
@@ -16,11 +16,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.practicum.playlistmaker3.data.repository.TrackRepository
-import com.practicum.playlistmaker3.di.NetworkModule
-import com.practicum.playlistmaker3.presentation.SearchState
-import com.practicum.playlistmaker3.presentation.SearchViewModel
-import com.practicum.playlistmaker3.presentation.SearchViewModelFactory
+import com.practicum.playlistmaker3.R
+import com.practicum.playlistmaker3.domain.models.Track
+import com.practicum.playlistmaker3.presentation.common.Creator
+import com.practicum.playlistmaker3.presentation.common.TrackAdapter
+import com.practicum.playlistmaker3.presentation.player.PlayerActivity
 
 class SearchActivity : AppCompatActivity() {
 
@@ -35,19 +35,22 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var refreshButton: Button
     private lateinit var trackAdapter: TrackAdapter
 
-    // Элементы истории
     private lateinit var historyContainer: ScrollView
     private lateinit var historyRecyclerView: RecyclerView
     private lateinit var clearHistoryButton: Button
     private lateinit var historyAdapter: TrackAdapter
-    private lateinit var searchHistory: SearchHistory
 
     private lateinit var viewModel: SearchViewModel
+
     private var searchText: String = ""
 
-    private companion object Constants {
-        const val SEARCH_TEXT_KEY = "SEARCH_TEXT"
-        const val CLICK_DEBOUNCE_DELAY = 300L
+    private val getHistoryUseCase by lazy { Creator.provideGetSearchHistoryUseCase() }
+    private val addToHistoryUseCase by lazy { Creator.provideAddTrackToHistoryUseCase() }
+    private val clearHistoryUseCase by lazy { Creator.provideClearSearchHistoryUseCase() }
+
+    companion object {
+        private const val SEARCH_TEXT_KEY = "SEARCH_TEXT"
+        private const val CLICK_DEBOUNCE_DELAY = 300L
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,7 +58,6 @@ class SearchActivity : AppCompatActivity() {
         setContentView(R.layout.activity_search)
 
         initViews()
-        initSearchHistory()
         setupViewModel()
         setupListeners()
         setupSearchTextWatcher()
@@ -82,11 +84,6 @@ class SearchActivity : AppCompatActivity() {
         clearHistoryButton = findViewById(R.id.clearHistoryButton)
     }
 
-    private fun initSearchHistory() {
-        val sharedPrefs = getSharedPreferences("search_history", Context.MODE_PRIVATE)
-        searchHistory = SearchHistory(sharedPrefs)
-    }
-
     private fun setupFocusChangeListener() {
         searchEditText.setOnFocusChangeListener { _, hasFocus ->
             updateHistoryVisibility()
@@ -94,9 +91,7 @@ class SearchActivity : AppCompatActivity() {
     }
 
     private fun setupViewModel() {
-        val repository = TrackRepository(NetworkModule.itunesApiService)
-        val factory = SearchViewModelFactory(repository)
-        viewModel = ViewModelProvider(this, factory)[SearchViewModel::class.java]
+        viewModel = ViewModelProvider(this, SearchViewModelFactory())[SearchViewModel::class.java]
     }
 
     private fun setupListeners() {
@@ -117,7 +112,7 @@ class SearchActivity : AppCompatActivity() {
         }
 
         clearHistoryButton.setOnClickListener {
-            searchHistory.clearHistory()
+            clearHistoryUseCase()
             updateHistoryVisibility()
         }
     }
@@ -129,12 +124,9 @@ class SearchActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 clearButton.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
                 searchText = s?.toString() ?: ""
-
-                // Если текст не пустой – убираем старые результаты (список, плейсхолдеры)
                 if (!searchText.isNullOrEmpty()) {
                     clearSearchResults()
                 }
-
                 updateHistoryVisibility()
                 viewModel.searchDebounce(searchText)
             }
@@ -150,7 +142,7 @@ class SearchActivity : AppCompatActivity() {
     private fun updateHistoryVisibility() {
         val isSearchFieldEmpty = searchEditText.text.isNullOrEmpty()
         val isSearchFieldFocused = searchEditText.hasFocus()
-        val history = searchHistory.getHistory()
+        val history = getHistoryUseCase()
         val showHistory = isSearchFieldEmpty && isSearchFieldFocused && history.isNotEmpty()
 
         historyContainer.visibility = if (showHistory) View.VISIBLE else View.GONE
@@ -162,7 +154,7 @@ class SearchActivity : AppCompatActivity() {
     }
 
     private fun addTrackToHistory(track: Track) {
-        searchHistory.addTrack(track)
+        addToHistoryUseCase(track)
         updateHistoryVisibility()
     }
 
