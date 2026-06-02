@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="@dimen/general_padding"
-    tools:context=".presentation.settings.SettingsActivity">
+    tools:context=".settings.ui.SettingsActivity">
 
     <FrameLayout
         android:layout_width="match_parent"

@@ -2,8 +2,8 @@ package com.practicum.playlistmaker3
 
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
-import com.practicum.playlistmaker3.domain.models.ThemeMode
-import com.practicum.playlistmaker3.presentation.common.Creator
+import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
+import com.practicum.playlistmaker3.creator.Creator
 
 class App : Application() {
 
