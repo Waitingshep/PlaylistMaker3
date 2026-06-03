@@ -8,7 +8,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.switchmaterial.SwitchMaterial
-import com.practicum.playlistmaker3.App
 import com.practicum.playlistmaker3.R
 import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
 
@@ -21,7 +20,7 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        viewModel = ViewModelProvider(this)[SettingsViewModel::class.java]
+        viewModel = ViewModelProvider(this, SettingsViewModelFactory())[SettingsViewModel::class.java]
 
         val backButton = findViewById<ImageButton>(R.id.back_button)
         themeSwitcher = findViewById(R.id.themeSwitcher)
@@ -42,10 +41,10 @@ class SettingsActivity : AppCompatActivity() {
         themeSwitcher.setOnCheckedChangeListener { _, isChecked ->
             val newMode = if (isChecked) ThemeMode.DARK else ThemeMode.LIGHT
             viewModel.setTheme(newMode)
-            (applicationContext as App).switchTheme(isChecked)
+
         }
 
-        // Остальные слушатели без изменений (share, support, agreement)
+
         val shareTextView = findViewById<TextView>(R.id.share_app)
         shareTextView.setOnClickListener {
             val shareIntent = Intent(Intent.ACTION_SEND).apply {

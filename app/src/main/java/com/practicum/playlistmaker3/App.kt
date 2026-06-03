@@ -2,8 +2,8 @@ package com.practicum.playlistmaker3
 
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
-import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
 import com.practicum.playlistmaker3.creator.Creator
+import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
 
 class App : Application() {
 
@@ -13,13 +13,6 @@ class App : Application() {
         val getThemeUseCase = Creator.provideGetThemeUseCase()
         val themeMode = getThemeUseCase()
         applyTheme(themeMode == ThemeMode.DARK)
-    }
-
-    fun switchTheme(darkThemeEnabled: Boolean) {
-        applyTheme(darkThemeEnabled)
-        val setThemeUseCase = Creator.provideSetThemeUseCase()
-        val mode = if (darkThemeEnabled) ThemeMode.DARK else ThemeMode.LIGHT
-        setThemeUseCase(mode)
     }
 
     private fun applyTheme(darkThemeEnabled: Boolean) {

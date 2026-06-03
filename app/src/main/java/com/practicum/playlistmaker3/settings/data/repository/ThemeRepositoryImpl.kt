@@ -1,7 +1,8 @@
-package com.practicum.playlistmaker3.settings.domain.repository
+package com.practicum.playlistmaker3.settings.data.repository
 
 import android.content.SharedPreferences
 import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
+import com.practicum.playlistmaker3.settings.domain.repository.ThemeRepository
 
 class ThemeRepositoryImpl(
     private val sharedPreferences: SharedPreferences
@@ -19,3 +20,4 @@ class ThemeRepositoryImpl(
         sharedPreferences.edit().putBoolean(themeKey, isDark).apply()
     }
 }
+

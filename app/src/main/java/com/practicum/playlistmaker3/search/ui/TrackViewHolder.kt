@@ -9,23 +9,19 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.practicum.playlistmaker3.R
-import com.practicum.playlistmaker3.search.domain.models.Track
 
 class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
     private val trackNameView: TextView = itemView.findViewById(R.id.trackName)
     private val artistNameView: TextView = itemView.findViewById(R.id.artistName)
     private val trackTimeView: TextView = itemView.findViewById(R.id.trackTime)
     private val artworkImageView: ImageView = itemView.findViewById(R.id.artworkUrl100)
 
-    fun bind(track: Track) {
+    fun bind(track: TrackUi) {
         trackNameView.text = track.trackName
         artistNameView.text = track.artistName
-        trackTimeView.text = track.formattedTime // Используем отформатированное время
+        trackTimeView.text = track.formattedTime
 
-        // Конвертируем 2dp в пиксели
         val cornerRadiusInPx = dpToPx(2f, itemView.context)
-
         Glide.with(itemView)
             .load(track.artworkUrl100)
             .placeholder(R.drawable.placeholder_cover_312)
@@ -34,7 +30,6 @@ class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             .into(artworkImageView)
     }
 
-    // Функция для конвертации dp в px
     private fun dpToPx(dp: Float, context: Context): Int {
         return (dp * context.resources.displayMetrics.density).toInt()
     }

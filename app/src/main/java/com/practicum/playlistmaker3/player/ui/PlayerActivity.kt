@@ -15,7 +15,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.practicum.playlistmaker3.R
-import com.practicum.playlistmaker3.search.domain.models.Track
+import com.practicum.playlistmaker3.search.ui.TrackUi
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -40,10 +40,7 @@ class PlayerActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
     private var updateTimeRunnable: Runnable? = null
-
-    private val dateFormat: SimpleDateFormat by lazy {
-        SimpleDateFormat("mm:ss", Locale.getDefault())
-    }
+    private val dateFormat: SimpleDateFormat by lazy { SimpleDateFormat("mm:ss", Locale.getDefault()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,9 +99,7 @@ class PlayerActivity : AppCompatActivity() {
         mediaPlayer = MediaPlayer().apply {
             setDataSource(previewUrl)
             prepareAsync()
-            setOnPreparedListener {
-                playButton.isEnabled = true
-            }
+            setOnPreparedListener { playButton.isEnabled = true }
             setOnCompletionListener {
                 stopPlayback()
                 currentTimeTextView.text = getString(R.string.default_track_time)
@@ -156,14 +151,12 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun formatTime(millis: Int): String = dateFormat.format(millis)
 
-    private fun getTrack(): Track? = getParcelableExtraCompat<Track>(TRACK_EXTRA)
-
-    private inline fun <reified T> getParcelableExtraCompat(key: String): T? {
+    private fun getTrack(): TrackUi? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(key, T::class.java)
+            intent.getParcelableExtra(TRACK_EXTRA, TrackUi::class.java)
         } else {
             @Suppress("DEPRECATION")
-            intent.getParcelableExtra(key)
+            intent.getParcelableExtra(TRACK_EXTRA)
         }
     }
 

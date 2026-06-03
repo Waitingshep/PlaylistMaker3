@@ -7,10 +7,10 @@ import com.practicum.playlistmaker3.search.domain.models.Track
 import com.practicum.playlistmaker3.search.domain.repository.SearchHistoryRepository
 
 class SearchHistoryRepositoryImpl(
-    private val sharedPreferences: SharedPreferences
+    private val sharedPreferences: SharedPreferences,
+    private val gson: Gson
 ) : SearchHistoryRepository {
 
-    private val gson = Gson()
     private val historyKey = "search_history"
     private val maxHistorySize = 10
 

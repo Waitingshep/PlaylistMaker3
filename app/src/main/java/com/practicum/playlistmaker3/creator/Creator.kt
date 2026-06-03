@@ -1,10 +1,15 @@
 package com.practicum.playlistmaker3.creator
 
 import android.content.Context
+import com.google.gson.Gson
 import com.practicum.playlistmaker3.search.data.repository.SearchHistoryRepositoryImpl
-import com.practicum.playlistmaker3.settings.domain.repository.ThemeRepositoryImpl
+import com.practicum.playlistmaker3.settings.data.repository.ThemeRepositoryImpl
 import com.practicum.playlistmaker3.search.data.repository.TrackRepositoryImpl
 import com.practicum.playlistmaker3.NetworkModule
+import com.practicum.playlistmaker3.player.data.repository.PlayerRepositoryImpl
+import com.practicum.playlistmaker3.player.domain.repository.PlayerRepository
+import com.practicum.playlistmaker3.player.domain.usecase.PlayTrackUseCase
+import com.practicum.playlistmaker3.player.domain.usecase.PlayTrackUseCaseImpl
 import com.practicum.playlistmaker3.settings.domain.repository.ThemeRepository
 import com.practicum.playlistmaker3.settings.domain.usecase.GetThemeUseCase
 import com.practicum.playlistmaker3.settings.domain.usecase.GetThemeUseCaseImpl
@@ -29,13 +34,22 @@ object Creator {
         appContext = context
     }
 
+    private fun getPlayerRepository(): PlayerRepository {
+        return PlayerRepositoryImpl()
+    }
+
+    fun providePlayTrackUseCase(): PlayTrackUseCase {
+        return PlayTrackUseCaseImpl(getPlayerRepository())
+    }
+
     private fun getTrackRepository(): TrackRepository {
         return TrackRepositoryImpl(NetworkModule.itunesApiService)
     }
 
     private fun getSearchHistoryRepository(): SearchHistoryRepository {
         val sharedPrefs = appContext.getSharedPreferences("search_history", Context.MODE_PRIVATE)
-        return SearchHistoryRepositoryImpl(sharedPrefs)
+        val gson = Gson()
+        return SearchHistoryRepositoryImpl(sharedPrefs, gson)
     }
 
     private fun getThemeRepository(): ThemeRepository {

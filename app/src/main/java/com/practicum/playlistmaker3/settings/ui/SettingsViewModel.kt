@@ -1,17 +1,17 @@
 package com.practicum.playlistmaker3.settings.ui
 
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.practicum.playlistmaker3.creator.Creator
 import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
-import kotlinx.coroutines.launch
+import com.practicum.playlistmaker3.settings.domain.usecase.GetThemeUseCase
+import com.practicum.playlistmaker3.settings.domain.usecase.SetThemeUseCase
 
-class SettingsViewModel : ViewModel() {
-
-    private val getThemeUseCase = Creator.provideGetThemeUseCase()
-    private val setThemeUseCase = Creator.provideSetThemeUseCase()
+class SettingsViewModel(
+    private val getThemeUseCase: GetThemeUseCase,
+    private val setThemeUseCase: SetThemeUseCase
+) : ViewModel() {
 
     private val _state = MutableLiveData<SettingsState>()
     val state: LiveData<SettingsState> = _state
@@ -26,9 +26,14 @@ class SettingsViewModel : ViewModel() {
     }
 
     fun setTheme(mode: ThemeMode) {
-        viewModelScope.launch {
-            setThemeUseCase(mode)
-            _state.value = SettingsState.ThemeLoaded(mode)
-        }
+        setThemeUseCase(mode)
+        applyTheme(mode == ThemeMode.DARK)
+        _state.value = SettingsState.ThemeLoaded(mode)
+    }
+
+    private fun applyTheme(darkThemeEnabled: Boolean) {
+        AppCompatDelegate.setDefaultNightMode(
+            if (darkThemeEnabled) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        )
     }
 }

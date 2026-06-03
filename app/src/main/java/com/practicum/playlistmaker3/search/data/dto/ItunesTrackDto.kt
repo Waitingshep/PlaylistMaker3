@@ -3,7 +3,7 @@ package com.practicum.playlistmaker3.search.data.dto
 import com.google.gson.annotations.SerializedName
 
 data class ItunesTrackDto(
-    @SerializedName("trackId") val trackId: Int?,
+    @SerializedName("trackId") val trackId: Long?,
     @SerializedName("trackName") val trackName: String?,
     @SerializedName("artistName") val artistName: String?,
     @SerializedName("trackTimeMillis") val trackTimeMillis: Long?,

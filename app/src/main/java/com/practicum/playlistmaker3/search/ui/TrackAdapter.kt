@@ -4,17 +4,14 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.practicum.playlistmaker3.R
-import com.practicum.playlistmaker3.search.ui.TrackViewHolder
-import com.practicum.playlistmaker3.search.domain.models.Track
 
 class TrackAdapter(
-    private var tracks: List<Track>,
-    private val onItemClick: (Track) -> Unit
+    private var tracks: List<TrackUi>,
+    private val onItemClick: (TrackUi) -> Unit
 ) : RecyclerView.Adapter<TrackViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrackViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_track, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_track, parent, false)
         return TrackViewHolder(view)
     }
 
@@ -28,7 +25,7 @@ class TrackAdapter(
 
     override fun getItemCount() = tracks.size
 
-    fun updateTracks(newTracks: List<Track>) {
+    fun updateTracks(newTracks: List<TrackUi>) {
         tracks = newTracks
         notifyDataSetChanged()
     }
