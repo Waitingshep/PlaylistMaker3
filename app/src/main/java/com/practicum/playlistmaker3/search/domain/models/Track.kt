@@ -1,6 +1,8 @@
 package com.practicum.playlistmaker3.search.domain.models
 
 import com.practicum.playlistmaker3.search.data.dto.ItunesTrackDto
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 data class Track(
     val trackId: Long,
@@ -14,6 +16,17 @@ data class Track(
     val country: String? = null,
     val previewUrl: String? = null
 ) {
+    val formattedTime: String
+        get() = try {
+            SimpleDateFormat("mm:ss", Locale.getDefault()).format(trackTimeMillis)
+        } catch (e: Exception) {
+            "00:00"
+        }
+
+    fun getCoverArtwork(): String {
+        return artworkUrl100.replaceAfterLast('/', "512x512bb.jpg")
+    }
+
     val releaseYear: String?
         get() = releaseDate?.take(4)
 

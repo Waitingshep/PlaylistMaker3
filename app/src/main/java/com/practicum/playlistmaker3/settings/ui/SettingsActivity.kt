@@ -6,21 +6,20 @@ import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.practicum.playlistmaker3.R
 import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SettingsActivity : AppCompatActivity() {
 
+    private val viewModel: SettingsViewModel by viewModel()
+
     private lateinit var themeSwitcher: SwitchMaterial
-    private lateinit var viewModel: SettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
-
-        viewModel = ViewModelProvider(this, SettingsViewModelFactory())[SettingsViewModel::class.java]
 
         val backButton = findViewById<ImageButton>(R.id.back_button)
         themeSwitcher = findViewById(R.id.themeSwitcher)
@@ -41,7 +40,6 @@ class SettingsActivity : AppCompatActivity() {
         themeSwitcher.setOnCheckedChangeListener { _, isChecked ->
             val newMode = if (isChecked) ThemeMode.DARK else ThemeMode.LIGHT
             viewModel.setTheme(newMode)
-
         }
 
 

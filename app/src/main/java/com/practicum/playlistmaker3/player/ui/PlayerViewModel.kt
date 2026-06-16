@@ -4,15 +4,16 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.playlistmaker3.creator.Creator
+import com.practicum.playlistmaker3.player.domain.usecase.PlayTrackUseCase
 import com.practicum.playlistmaker3.search.domain.models.Track
+import com.practicum.playlistmaker3.search.ui.TrackUi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class PlayerViewModel : ViewModel() {
-
-    private val playTrackUseCase = Creator.providePlayTrackUseCase()
+class PlayerViewModel(
+    private val playTrackUseCase: PlayTrackUseCase
+) : ViewModel() {
 
     private val _state = MutableLiveData<PlayerState>()
     val state: LiveData<PlayerState> = _state
@@ -20,7 +21,23 @@ class PlayerViewModel : ViewModel() {
     private var updateJob: Job? = null
     private var currentTrack: Track? = null
 
-    fun loadTrack(track: Track) {
+    private fun mapToDomain(trackUi: TrackUi): Track {
+        return Track(
+            trackId = trackUi.trackId,
+            trackName = trackUi.trackName,
+            artistName = trackUi.artistName,
+            trackTimeMillis = trackUi.trackTimeMillis,
+            artworkUrl100 = trackUi.artworkUrl100,
+            collectionName = trackUi.collectionName,
+            releaseDate = trackUi.releaseDate,
+            primaryGenreName = trackUi.primaryGenreName,
+            country = trackUi.country,
+            previewUrl = trackUi.previewUrl
+        )
+    }
+
+    fun loadTrack(trackUi: TrackUi) {
+        val track = mapToDomain(trackUi)
         currentTrack = track
         _state.value = PlayerState.Content(track)
         playTrackUseCase.release()
