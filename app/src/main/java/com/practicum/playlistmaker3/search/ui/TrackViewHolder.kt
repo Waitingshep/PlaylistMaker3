@@ -22,10 +22,13 @@ class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         trackTimeView.text = track.formattedTime
 
         val cornerRadiusInPx = dpToPx(2f, itemView.context)
+        val imageUrl = track.getCoverArtwork()
+
         Glide.with(itemView)
-            .load(track.artworkUrl100)
+            .load(imageUrl)
             .placeholder(R.drawable.placeholder_cover_312)
             .error(R.drawable.placeholder_cover_312)
+            .fallback(R.drawable.placeholder_cover_312)
             .transform(CenterCrop(), RoundedCorners(cornerRadiusInPx))
             .into(artworkImageView)
     }

@@ -13,13 +13,15 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.practicum.playlistmaker3.R
 import com.practicum.playlistmaker3.player.ui.PlayerActivity
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SearchActivity : AppCompatActivity() {
+
+    private val viewModel: SearchViewModel by viewModel()
 
     private lateinit var searchEditText: EditText
     private lateinit var clearButton: ImageButton
@@ -37,7 +39,6 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var clearHistoryButton: Button
     private lateinit var historyAdapter: TrackAdapter
 
-    private lateinit var viewModel: SearchViewModel
     private var searchText: String = ""
 
     companion object {
@@ -50,7 +51,6 @@ class SearchActivity : AppCompatActivity() {
         setContentView(R.layout.activity_search)
 
         initViews()
-        setupViewModel()
         setupListeners()
         setupSearchTextWatcher()
         setupFocusChangeListener()
@@ -73,10 +73,6 @@ class SearchActivity : AppCompatActivity() {
         historyContainer = findViewById(R.id.historyScrollView)
         historyRecyclerView = findViewById(R.id.historyRecyclerView)
         clearHistoryButton = findViewById(R.id.clearHistoryButton)
-    }
-
-    private fun setupViewModel() {
-        viewModel = ViewModelProvider(this)[SearchViewModel::class.java]
     }
 
     private fun setupFocusChangeListener() {
