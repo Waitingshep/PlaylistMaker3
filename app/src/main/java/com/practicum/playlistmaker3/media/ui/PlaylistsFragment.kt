@@ -8,7 +8,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.practicum.playlistmaker3.R
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -27,13 +26,17 @@ class PlaylistsFragment : Fragment() {
         val emptyImage = view.findViewById<ImageView>(R.id.emptyPlaylistImage)
         val emptyText = view.findViewById<TextView>(R.id.emptyPlaylistText)
 
-        // Показываем заглушку, так как плейлистов нет
         emptyImage.visibility = View.VISIBLE
         emptyText.visibility = View.VISIBLE
 
-        // Кнопка пока без действия
         createButton.setOnClickListener {
-            // TODO: обработка нажатия (в будущем)
+            // TODO: обработка нажатия
+        }
+    }
+
+    companion object {
+        fun newInstance(): PlaylistsFragment {
+            return PlaylistsFragment()
         }
     }
 }

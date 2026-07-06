@@ -24,8 +24,13 @@ class FavoritesFragment : Fragment() {
         val emptyImage = view.findViewById<ImageView>(R.id.emptyFavoritesImage)
         val emptyText = view.findViewById<TextView>(R.id.emptyFavoritesText)
 
-        // Показываем заглушку
         emptyImage.visibility = View.VISIBLE
         emptyText.visibility = View.VISIBLE
+    }
+
+    companion object {
+        fun newInstance(): FavoritesFragment {
+            return FavoritesFragment()
+        }
     }
 }

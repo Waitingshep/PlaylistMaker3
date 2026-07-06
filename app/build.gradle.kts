@@ -65,6 +65,6 @@ dependencies {
     implementation("io.insert-koin:koin-android:3.3.0")
     implementation("io.insert-koin:koin-android:3.3.0")
 
-    implementation("androidx.viewpager2:viewpager2:1.0.0")
-    implementation("com.google.android.material:material:1.11.0")
+    implementation(libs.androidx.viewpager2)
+    implementation(libs.google.material.v1110)
 }

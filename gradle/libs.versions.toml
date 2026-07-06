@@ -1,6 +1,7 @@
 [versions]
 agp = "9.2.1"
 glide = "5.0.5"
+googleMaterial = "1.11.0"
 kotlin = "2.2.10"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -10,10 +11,13 @@ appcompat = "1.7.1"
 material = "1.13.0"
 activity = "1.12.3"
 constraintlayout = "2.2.1"
+viewpager2 = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+google-material-v1110 = { module = "com.google.android.material:material", version.ref = "googleMaterial" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
