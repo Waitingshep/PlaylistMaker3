@@ -20,4 +20,7 @@
     <color name="placeholder_text">#FF000000</color>
     <color name="refresh_button_bg">#FF000000</color>
     <color name="refresh_button_text">#FFFFFFFF</color>
+    <color name="media_h2">#1A1B22</color>
+    <color name="media_button">#1A1B22</color>
+    <color name="media_button_text">#FFFFFFFF</color>
 </resources>

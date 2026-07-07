@@ -27,4 +27,9 @@
     <string name="cover_image">Обложка альбома</string>
     <string name="test">test</string>
     <string name="default_track_time">0:00</string>
+    <string name="playlists">Плейлисты</string>
+    <string name="favorites">Избранные треки</string>
+    <string name="new_playlist">Новый плейлист</string>
+    <string name="no_playlists">Вы не создали ни одного плейлиста</string>
+    <string name="no_favorites">Ваша медиатека пуста</string>
 </resources>
