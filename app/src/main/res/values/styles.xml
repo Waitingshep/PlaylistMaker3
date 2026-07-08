@@ -61,5 +61,12 @@
         <item name="android:minWidth">0dp</item>
     </style>
 
+    <!-- Нижнее меню -->
+    <style name="BottomNavTextStyle" parent="TextAppearance.AppCompat.Caption">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">@font/ys_display_regular</item>
+        <item name="android:textFontWeight">400</item>
+    </style>
+
 </resources>
 

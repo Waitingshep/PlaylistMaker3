@@ -23,4 +23,5 @@
     <color name="media_h2">#1A1B22</color>
     <color name="media_button">#1A1B22</color>
     <color name="media_button_text">#FFFFFFFF</color>
+    <color name="bottom_nav_line">#E6E8EB</color>
 </resources>

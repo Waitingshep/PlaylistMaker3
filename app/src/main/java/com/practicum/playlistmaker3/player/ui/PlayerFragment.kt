@@ -2,12 +2,15 @@ package com.practicum.playlistmaker3.player.ui
 
 import android.os.Build
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -16,7 +19,7 @@ import com.practicum.playlistmaker3.search.domain.models.Track
 import com.practicum.playlistmaker3.search.ui.TrackUi
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class PlayerActivity : AppCompatActivity() {
+class PlayerFragment : Fragment() {
 
     private val viewModel: PlayerViewModel by viewModel()
 
@@ -36,39 +39,39 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var currentTimeTextView: TextView
     private lateinit var playButton: ImageButton
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_player)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(R.layout.fragment_player, container, false)
+    }
 
-        initViews()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        backButton = view.findViewById(R.id.backButton)
+        coverImageView = view.findViewById(R.id.coverImageView)
+        trackNameTextView = view.findViewById(R.id.trackNameTextView)
+        artistNameTextView = view.findViewById(R.id.artistNameTextView)
+        durationValueTextView = view.findViewById(R.id.durationValueTextView)
+        albumLayout = view.findViewById(R.id.albumLayout)
+        albumValueTextView = view.findViewById(R.id.albumValueTextView)
+        yearLayout = view.findViewById(R.id.yearLayout)
+        yearValueTextView = view.findViewById(R.id.yearValueTextView)
+        genreLayout = view.findViewById(R.id.genreLayout)
+        genreValueTextView = view.findViewById(R.id.genreValueTextView)
+        countryLayout = view.findViewById(R.id.countryLayout)
+        countryValueTextView = view.findViewById(R.id.countryValueTextView)
+        currentTimeTextView = view.findViewById(R.id.currentTimeTextView)
+        playButton = view.findViewById(R.id.playButton)
+
         setupBackButton()
         setupPlayButton()
         observeViewModel()
         loadTrack()
     }
 
-    private fun initViews() {
-        backButton = findViewById(R.id.backButton)
-        coverImageView = findViewById(R.id.coverImageView)
-        trackNameTextView = findViewById(R.id.trackNameTextView)
-        artistNameTextView = findViewById(R.id.artistNameTextView)
-        durationValueTextView = findViewById(R.id.durationValueTextView)
-        albumLayout = findViewById(R.id.albumLayout)
-        albumValueTextView = findViewById(R.id.albumValueTextView)
-        yearLayout = findViewById(R.id.yearLayout)
-        yearValueTextView = findViewById(R.id.yearValueTextView)
-        genreLayout = findViewById(R.id.genreLayout)
-        genreValueTextView = findViewById(R.id.genreValueTextView)
-        countryLayout = findViewById(R.id.countryLayout)
-        countryValueTextView = findViewById(R.id.countryValueTextView)
-        currentTimeTextView = findViewById(R.id.currentTimeTextView)
-        playButton = findViewById(R.id.playButton)
-    }
-
     private fun setupBackButton() {
         backButton.setOnClickListener {
             viewModel.stop()
-            finish()
+            findNavController().popBackStack()
         }
     }
 
@@ -85,7 +88,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
-        viewModel.state.observe(this) { state ->
+        viewModel.state.observe(viewLifecycleOwner) { state ->
             when (state) {
                 is PlayerState.Content -> {
                     displayTrackInfo(state.track)
@@ -106,16 +109,9 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun loadTrack() {
-        val track = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(TRACK_EXTRA, TrackUi::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableExtra(TRACK_EXTRA)
-        }
-        if (track != null) {
-            viewModel.loadTrack(track)
-        } else {
-            finish()
+        val args = arguments?.getParcelable<TrackUi>("track")
+        if (args != null) {
+            viewModel.loadTrack(args)
         }
     }
 
@@ -167,18 +163,4 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun dpToPx(dp: Float): Int = (dp * resources.displayMetrics.density).toInt()
-
-    override fun onPause() {
-        super.onPause()
-        viewModel.pause()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        viewModel.stop()
-    }
-
-    companion object {
-        const val TRACK_EXTRA = "track_extra"
-    }
 }

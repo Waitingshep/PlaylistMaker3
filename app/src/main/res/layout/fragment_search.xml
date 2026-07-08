@@ -15,18 +15,9 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageButton
-            android:id="@+id/back_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="@dimen/general_padding"
-            android:background="?selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_arrow_back_24"
-            app:tint="@color/icon_title" />
-
         <TextView
             style="@style/TitleTextStyle"
-            android:paddingStart="64dp"
+            android:paddingStart="16dp"
             android:paddingEnd="0dp"
             android:paddingTop="14dp"
             android:paddingBottom="16dp"
