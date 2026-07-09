@@ -14,14 +14,11 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
-import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.practicum.playlistmaker3.R
-import com.practicum.playlistmaker3.search.ui.TrackAdapter
-import com.practicum.playlistmaker3.search.ui.TrackUi
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SearchFragment : Fragment() {
@@ -44,6 +41,12 @@ class SearchFragment : Fragment() {
     private lateinit var historyAdapter: TrackAdapter
 
     private var searchText: String = ""
+    private var lastClickTime: Long = 0
+
+    companion object {
+        private const val SEARCH_TEXT_KEY = "SEARCH_TEXT"
+        private const val CLICK_DEBOUNCE_DELAY = 300L
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_search, container, false)
@@ -59,6 +62,16 @@ class SearchFragment : Fragment() {
         setupRecyclerView()
         setupHistoryRecyclerView()
         observeViewModel()
+
+        val restoredText = savedInstanceState?.getString(SEARCH_TEXT_KEY)
+        if (!restoredText.isNullOrEmpty()) {
+            searchEditText.removeTextChangedListener(textWatcher)
+            searchEditText.setText(restoredText)
+            searchEditText.addTextChangedListener(textWatcher)
+            viewModel.restoreState(restoredText)
+        } else {
+            viewModel.loadHistory()
+        }
     }
 
     private fun initViews(view: View) {
@@ -100,26 +113,28 @@ class SearchFragment : Fragment() {
         }
     }
 
+    private val textWatcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            clearButton.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
+            searchText = s?.toString() ?: ""
+            if (!searchText.isNullOrEmpty()) {
+                clearSearchResults()
+            }
+            viewModel.searchDebounce(searchText)
+        }
+
+        override fun afterTextChanged(s: Editable?) {
+            if (s.isNullOrEmpty()) {
+                clearSearchResults()
+                viewModel.loadHistory()
+            }
+        }
+    }
+
     private fun setupSearchTextWatcher() {
-        searchEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                clearButton.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
-                searchText = s?.toString() ?: ""
-                if (!searchText.isNullOrEmpty()) {
-                    clearSearchResults()
-                }
-                viewModel.searchDebounce(searchText)
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-                if (s.isNullOrEmpty()) {
-                    clearSearchResults()
-                    viewModel.loadHistory()
-                }
-            }
-        })
+        searchEditText.addTextChangedListener(textWatcher)
     }
 
     private fun clearSearchResults() {
@@ -145,7 +160,6 @@ class SearchFragment : Fragment() {
         historyRecyclerView.adapter = historyAdapter
     }
 
-    private var lastClickTime = 0L
     private fun openPlayerFragmentWithDebounce(trackUi: TrackUi) {
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastClickTime > CLICK_DEBOUNCE_DELAY) {
@@ -185,6 +199,11 @@ class SearchFragment : Fragment() {
     }
 
     private fun showHistory(tracks: List<TrackUi>) {
+        if (tracks.isEmpty()) {
+            historyContainer.visibility = View.GONE
+            placeholdersContainer.visibility = View.GONE
+            return
+        }
         progressBar.visibility = View.GONE
         recyclerView.visibility = View.GONE
         historyContainer.visibility = View.VISIBLE
@@ -224,7 +243,8 @@ class SearchFragment : Fragment() {
         inputMethodManager.hideSoftInputFromWindow(searchEditText.windowToken, 0)
     }
 
-    companion object {
-        private const val CLICK_DEBOUNCE_DELAY = 300L
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(SEARCH_TEXT_KEY, searchText)
     }
 }
