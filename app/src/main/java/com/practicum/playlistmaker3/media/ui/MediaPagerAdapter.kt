@@ -1,10 +1,9 @@
 package com.practicum.playlistmaker3.media.ui
 
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 
-class MediaPagerAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapter(fragmentActivity) {
+class MediaPagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
 
     override fun getItemCount(): Int = 2
 
@@ -12,7 +11,7 @@ class MediaPagerAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapt
         return when (position) {
             0 -> FavoritesFragment.newInstance()
             1 -> PlaylistsFragment.newInstance()
-            else -> throw IndexOutOfBoundsException("Invalid position $position")
+            else -> throw IndexOutOfBoundsException("Invalid position")
         }
     }
 }

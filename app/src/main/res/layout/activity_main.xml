@@ -3,41 +3,31 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/background_main"
     android:orientation="vertical"
-    android:padding="@dimen/general_padding"
-    tools:context=".main.ui.MainActivity">
+    android:background="@color/windowBackground">
 
-
-    <TextView
-        style="@style/TitleTextStyle"
-        android:text="@string/app_name"
-        android:textColor="@color/white" />
-
-    <LinearLayout
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="@dimen/title_margin"
-        android:orientation="vertical">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:navGraph="@navigation/nav_graph"
+        app:defaultNavHost="true" />
 
-        <Button
-            android:id="@+id/search_button"
-            android:text="@string/search"
-            app:icon="@drawable/ic_search_mode_24"
-            style="@style/MainActivityButtonStyle" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/bottom_nav_line" />
 
-        <Button
-            android:id="@+id/media_button"
-            android:text="@string/media"
-            app:icon="@drawable/ic_media_mode_24"
-            style="@style/MainActivityButtonStyle" />
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        style="@style/BottomNavTextStyle"
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/windowBackground"
+        app:itemIconTint="@color/bottom_nav_item_selector"
+        app:itemTextColor="@color/bottom_nav_item_selector"
+        app:menu="@menu/bottom_navigation_menu" />
 
-        <Button
-            android:id="@+id/settings_button"
-            android:text="@string/settings"
-            app:icon="@drawable/ic_settings_mode_24"
-            style="@style/MainActivityButtonStyle" />
-
-    </LinearLayout>
 </LinearLayout>

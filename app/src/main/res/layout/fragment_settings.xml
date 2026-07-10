@@ -6,26 +6,16 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="@dimen/general_padding"
-    tools:context=".settings.ui.SettingsActivity">
+    tools:context=".settings.ui.SettingsFragment">
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/title_margin">
 
-        <ImageButton
-            android:id="@+id/back_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="?selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_arrow_back_24"
-            app:tint="@color/icon_title" />
 
         <TextView
             style="@style/TitleTextStyle"
-            android:paddingStart="@dimen/title_padding_start"
-            android:paddingEnd="0dp"
             android:text="@string/settings" />
     </FrameLayout>
 
