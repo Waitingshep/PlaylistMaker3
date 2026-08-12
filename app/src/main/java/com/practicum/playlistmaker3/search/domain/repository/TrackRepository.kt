@@ -1,7 +1,8 @@
 package com.practicum.playlistmaker3.search.domain.repository
 
 import com.practicum.playlistmaker3.search.domain.models.Track
+import kotlinx.coroutines.flow.Flow
 
 interface TrackRepository {
-    suspend fun searchTracks(query: String): Result<List<Track>>
+    fun searchTracks(query: String): Flow<Result<List<Track>>>
 }

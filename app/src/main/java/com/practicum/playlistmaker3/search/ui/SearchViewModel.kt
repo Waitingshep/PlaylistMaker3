@@ -8,6 +8,8 @@ import com.practicum.playlistmaker3.search.domain.models.Track
 import com.practicum.playlistmaker3.search.domain.usecase.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 class SearchViewModel(
@@ -55,10 +57,6 @@ class SearchViewModel(
     }
 
     fun loadHistory() {
-        if (lastQuery.isNotBlank() && lastResult != null) {
-            showCachedResult()
-            return
-        }
         val history = getHistoryUseCase()
         val uiHistory = history.map { mapToUi(it) }
         _uiState.value = SearchUiState.History(uiHistory)
@@ -91,19 +89,25 @@ class SearchViewModel(
             return
         }
         lastQuery = query
-        viewModelScope.launch {
-            executeSearch(query)
-        }
+        executeSearch(query)
     }
 
     fun searchDebounce(query: String) {
         searchJob?.cancel()
         if (query.isBlank()) {
             lastQuery = ""
+            lastResult = null
             loadHistory()
             return
         }
+
+        if (query != lastQuery) {
+            lastResult = null
+        }
+
+        _uiState.value = SearchUiState.Loading
         lastQuery = query
+
         searchJob = viewModelScope.launch {
             delay(2000L)
             if (query == lastQuery && lastResult != null) {
@@ -114,35 +118,42 @@ class SearchViewModel(
         }
     }
 
-    private suspend fun executeSearch(query: String) {
+    private fun executeSearch(query: String) {
         if (query == lastQuery && lastResult != null) {
             showCachedResult()
             return
         }
-        if (query.isBlank()) {
-            loadHistory()
-            return
+
+        viewModelScope.launch {
+            searchTracksUseCase(query)
+                .onStart {
+                    if (_uiState.value !is SearchUiState.Loading) {
+                        _uiState.value = SearchUiState.Loading
+                    }
+                }
+                .catch { e ->
+                    e.printStackTrace()
+                    _uiState.value = SearchUiState.Error
+                }
+                .collect { result ->
+                    result.fold(
+                        onSuccess = { tracks ->
+                            lastResult = tracks
+                            val uiTracks = tracks.map { mapToUi(it) }
+                            _uiState.value = if (uiTracks.isEmpty()) SearchUiState.Empty else SearchUiState.Content(uiTracks)
+                        },
+                        onFailure = {
+                            _uiState.value = SearchUiState.Error
+                        }
+                    )
+                }
         }
-        _uiState.value = SearchUiState.Loading
-        val result = searchTracksUseCase(query)
-        result.fold(
-            onSuccess = { tracks ->
-                lastResult = tracks
-                val uiTracks = tracks.map { mapToUi(it) }
-                _uiState.value = if (uiTracks.isEmpty()) SearchUiState.Empty else SearchUiState.Content(uiTracks)
-            },
-            onFailure = {
-                _uiState.value = SearchUiState.Error
-            }
-        )
     }
 
     fun retryLastSearch() {
         if (lastQuery.isNotBlank()) {
             searchJob?.cancel()
-            viewModelScope.launch {
-                executeSearch(lastQuery)
-            }
+            executeSearch(lastQuery)
         }
     }
 

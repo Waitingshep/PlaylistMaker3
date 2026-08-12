@@ -77,17 +77,19 @@ class PlayerViewModel(
         }
     }
 
+
     private fun startUpdating() {
         stopUpdating()
         updateJob = viewModelScope.launch {
             while (true) {
-                delay(500)
+                delay(300)
                 currentTrack?.let { track ->
                     if (playTrackUseCase.isPlaying()) {
                         _state.value = PlayerState.Playing(track, playTrackUseCase.getCurrentPosition())
                     } else {
                         stopUpdating()
                         _state.value = PlayerState.Content(track)
+                        playTrackUseCase.stop()
                     }
                 }
             }

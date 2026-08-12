@@ -15,10 +15,14 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.practicum.playlistmaker3.R
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SearchFragment : Fragment() {
@@ -41,7 +45,7 @@ class SearchFragment : Fragment() {
     private lateinit var historyAdapter: TrackAdapter
 
     private var searchText: String = ""
-    private var lastClickTime: Long = 0
+    private var clickDebounceJob: Job? = null
 
     companion object {
         private const val SEARCH_TEXT_KEY = "SEARCH_TEXT"
@@ -160,10 +164,11 @@ class SearchFragment : Fragment() {
         historyRecyclerView.adapter = historyAdapter
     }
 
+    // Новая реализация debounce кликов через корутины
     private fun openPlayerFragmentWithDebounce(trackUi: TrackUi) {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastClickTime > CLICK_DEBOUNCE_DELAY) {
-            lastClickTime = currentTime
+        clickDebounceJob?.cancel()
+        clickDebounceJob = viewLifecycleOwner.lifecycleScope.launch {
+            delay(CLICK_DEBOUNCE_DELAY)
             val bundle = Bundle().apply {
                 putParcelable("track", trackUi)
             }
