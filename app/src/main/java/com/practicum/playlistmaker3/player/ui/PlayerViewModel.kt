@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.playlistmaker3.player.domain.usecase.PlayTrackUseCase
 import com.practicum.playlistmaker3.search.domain.models.Track
+import com.practicum.playlistmaker3.search.ui.TrackMapper
 import com.practicum.playlistmaker3.search.ui.TrackUi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -20,40 +21,31 @@ class PlayerViewModel(
 
     private var updateJob: Job? = null
     private var currentTrack: Track? = null
-
-    private fun mapToDomain(trackUi: TrackUi): Track {
-        return Track(
-            trackId = trackUi.trackId,
-            trackName = trackUi.trackName,
-            artistName = trackUi.artistName,
-            trackTimeMillis = trackUi.trackTimeMillis,
-            artworkUrl100 = trackUi.artworkUrl100,
-            collectionName = trackUi.collectionName,
-            releaseDate = trackUi.releaseDate,
-            primaryGenreName = trackUi.primaryGenreName,
-            country = trackUi.country,
-            previewUrl = trackUi.previewUrl
-        )
-    }
+    private var isPrepared: Boolean = false
 
     fun loadTrack(trackUi: TrackUi) {
-        val track = mapToDomain(trackUi)
+        val track = TrackMapper.mapToDomain(trackUi)
         currentTrack = track
+        isPrepared = false
         _state.value = PlayerState.Content(track)
         playTrackUseCase.release()
         playTrackUseCase.prepare(track,
             onPrepared = {
+                isPrepared = true
                 _state.value = PlayerState.Content(track)
             },
             onCompletion = {
                 stopUpdating()
+                isPrepared = false
                 _state.value = PlayerState.Content(track)
                 playTrackUseCase.stop()
+                // При завершении время сбрасывается в UI через Content
             }
         )
     }
 
     fun play() {
+        if (!isPrepared) return
         currentTrack?.let { track ->
             playTrackUseCase.play()
             startUpdating()
@@ -72,11 +64,11 @@ class PlayerViewModel(
     fun stop() {
         playTrackUseCase.stop()
         stopUpdating()
+        isPrepared = false
         currentTrack?.let { track ->
             _state.value = PlayerState.Content(track)
         }
     }
-
 
     private fun startUpdating() {
         stopUpdating()
