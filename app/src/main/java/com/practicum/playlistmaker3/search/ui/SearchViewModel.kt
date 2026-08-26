@@ -24,55 +24,21 @@ class SearchViewModel(
     private var searchJob: Job? = null
     private var lastResult: List<Track>? = null
 
-    private fun mapToUi(track: Track): TrackUi {
-        return TrackUi(
-            trackId = track.trackId,
-            trackName = track.trackName,
-            artistName = track.artistName,
-            trackTimeMillis = track.trackTimeMillis,
-            artworkUrl100 = track.artworkUrl100,
-            collectionName = track.collectionName,
-            releaseDate = track.releaseDate,
-            primaryGenreName = track.primaryGenreName,
-            country = track.country,
-            previewUrl = track.previewUrl
-        )
-    }
-
-    private fun mapToDomain(trackUi: TrackUi): Track {
-        return Track(
-            trackId = trackUi.trackId,
-            trackName = trackUi.trackName,
-            artistName = trackUi.artistName,
-            trackTimeMillis = trackUi.trackTimeMillis,
-            artworkUrl100 = trackUi.artworkUrl100,
-            collectionName = trackUi.collectionName,
-            releaseDate = trackUi.releaseDate,
-            primaryGenreName = trackUi.primaryGenreName,
-            country = trackUi.country,
-            previewUrl = trackUi.previewUrl
-        )
-    }
-
     fun loadHistory() {
-        if (lastQuery.isNotBlank() && lastResult != null) {
-            showCachedResult()
-            return
-        }
         val history = getHistoryUseCase()
-        val uiHistory = history.map { mapToUi(it) }
+        val uiHistory = history.map { TrackMapper.mapToUi(it) }
         _uiState.value = SearchUiState.History(uiHistory)
     }
 
     private fun showCachedResult() {
         lastResult?.let { tracks ->
-            val uiTracks = tracks.map { mapToUi(it) }
+            val uiTracks = tracks.map { TrackMapper.mapToUi(it) }
             _uiState.value = if (uiTracks.isEmpty()) SearchUiState.Empty else SearchUiState.Content(uiTracks)
         }
     }
 
     fun addToHistory(trackUi: TrackUi) {
-        val track = mapToDomain(trackUi)
+        val track = TrackMapper.mapToDomain(trackUi)
         addToHistoryUseCase(track)
     }
 
@@ -100,10 +66,18 @@ class SearchViewModel(
         searchJob?.cancel()
         if (query.isBlank()) {
             lastQuery = ""
+            lastResult = null
             loadHistory()
             return
         }
+
+        if (query != lastQuery) {
+            lastResult = null
+        }
+
+        _uiState.value = SearchUiState.Loading
         lastQuery = query
+
         searchJob = viewModelScope.launch {
             delay(2000L)
             if (query == lastQuery && lastResult != null) {
@@ -119,22 +93,23 @@ class SearchViewModel(
             showCachedResult()
             return
         }
-        if (query.isBlank()) {
-            loadHistory()
-            return
+
+        try {
+            val result = searchTracksUseCase(query)
+            result.fold(
+                onSuccess = { tracks ->
+                    lastResult = tracks
+                    val uiTracks = tracks.map { TrackMapper.mapToUi(it) }
+                    _uiState.value = if (uiTracks.isEmpty()) SearchUiState.Empty else SearchUiState.Content(uiTracks)
+                },
+                onFailure = {
+                    _uiState.value = SearchUiState.Error
+                }
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            _uiState.value = SearchUiState.Error
         }
-        _uiState.value = SearchUiState.Loading
-        val result = searchTracksUseCase(query)
-        result.fold(
-            onSuccess = { tracks ->
-                lastResult = tracks
-                val uiTracks = tracks.map { mapToUi(it) }
-                _uiState.value = if (uiTracks.isEmpty()) SearchUiState.Empty else SearchUiState.Content(uiTracks)
-            },
-            onFailure = {
-                _uiState.value = SearchUiState.Error
-            }
-        )
     }
 
     fun retryLastSearch() {

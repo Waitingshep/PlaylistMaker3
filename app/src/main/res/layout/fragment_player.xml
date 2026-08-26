@@ -225,7 +225,7 @@
 
             <TextView
                 android:id="@+id/albumValueTextView"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:ellipsize="end"
@@ -234,10 +234,12 @@
                 android:textColor="@color/song_name_search"
                 android:textSize="13sp"
                 android:textFontWeight="400"
+                android:textAlignment="textEnd"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/albumLabel"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                tools:text="@string/test" />
+                tools:text="Очень длинное название альбома, которое должно обрезаться и заканчиваться многоточием, чтобы не вылезать за пределы экрана" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- Год -->

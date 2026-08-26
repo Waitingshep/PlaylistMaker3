@@ -12,12 +12,14 @@ class TrackRepositoryImpl(
 
     override suspend fun searchTracks(query: String): Result<List<Track>> {
         return try {
-            if (query.isBlank()) return Result.success(emptyList())
+            if (query.isBlank()) {
+                return Result.success(emptyList())
+            }
             val response = apiService.searchTracks(query)
             if (response.resultCount > 0) {
                 val tracks = response.results.mapNotNull { itunesTrack ->
                     if (!itunesTrack.trackName.isNullOrBlank() || !itunesTrack.artistName.isNullOrBlank()) {
-                        Track.Companion.fromItunesTrack(itunesTrack)
+                        Track.fromItunesTrack(itunesTrack)
                     } else null
                 }
                 Result.success(tracks)
