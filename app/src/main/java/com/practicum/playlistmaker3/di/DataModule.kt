@@ -4,8 +4,10 @@ import android.content.Context
 import com.google.gson.Gson
 import com.practicum.playlistmaker3.player.data.repository.PlayerRepositoryImpl
 import com.practicum.playlistmaker3.player.domain.repository.PlayerRepository
+import com.practicum.playlistmaker3.search.data.repository.FavoriteRepositoryImpl
 import com.practicum.playlistmaker3.search.data.repository.SearchHistoryRepositoryImpl
 import com.practicum.playlistmaker3.search.data.repository.TrackRepositoryImpl
+import com.practicum.playlistmaker3.search.domain.repository.FavoriteRepository
 import com.practicum.playlistmaker3.search.domain.repository.SearchHistoryRepository
 import com.practicum.playlistmaker3.search.domain.repository.TrackRepository
 import com.practicum.playlistmaker3.settings.data.repository.ThemeRepositoryImpl
@@ -29,6 +31,10 @@ val dataModule = module {
     }
 
     single<TrackRepository> {
-        TrackRepositoryImpl(get())
+        TrackRepositoryImpl(get(), get())
+    }
+
+    single<FavoriteRepository> {
+        FavoriteRepositoryImpl(get())
     }
 }

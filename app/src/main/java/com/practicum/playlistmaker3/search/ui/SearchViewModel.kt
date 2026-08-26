@@ -17,23 +17,25 @@ class SearchViewModel(
     private val clearHistoryUseCase: ClearSearchHistoryUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableLiveData<SearchUiState>()
-    val uiState: LiveData<SearchUiState> = _uiState
+    private val _state = MutableLiveData<SearchState>()
+    val state: LiveData<SearchState> = _state
 
     private var lastQuery: String = ""
     private var searchJob: Job? = null
     private var lastResult: List<Track>? = null
 
     fun loadHistory() {
-        val history = getHistoryUseCase()
-        val uiHistory = history.map { TrackMapper.mapToUi(it) }
-        _uiState.value = SearchUiState.History(uiHistory)
+        viewModelScope.launch {
+            val history = getHistoryUseCase()
+            val uiHistory = history.map { TrackMapper.mapToUi(it) }
+            _state.value = SearchState.History(uiHistory)
+        }
     }
 
     private fun showCachedResult() {
         lastResult?.let { tracks ->
             val uiTracks = tracks.map { TrackMapper.mapToUi(it) }
-            _uiState.value = if (uiTracks.isEmpty()) SearchUiState.Empty else SearchUiState.Content(uiTracks)
+            _state.value = if (uiTracks.isEmpty()) SearchState.Empty else SearchState.Content(uiTracks)
         }
     }
 
@@ -75,7 +77,7 @@ class SearchViewModel(
             lastResult = null
         }
 
-        _uiState.value = SearchUiState.Loading
+        _state.value = SearchState.Loading
         lastQuery = query
 
         searchJob = viewModelScope.launch {
@@ -100,15 +102,15 @@ class SearchViewModel(
                 onSuccess = { tracks ->
                     lastResult = tracks
                     val uiTracks = tracks.map { TrackMapper.mapToUi(it) }
-                    _uiState.value = if (uiTracks.isEmpty()) SearchUiState.Empty else SearchUiState.Content(uiTracks)
+                    _state.value = if (uiTracks.isEmpty()) SearchState.Empty else SearchState.Content(uiTracks)
                 },
                 onFailure = {
-                    _uiState.value = SearchUiState.Error
+                    _state.value = SearchState.Error
                 }
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            _uiState.value = SearchUiState.Error
+            _state.value = SearchState.Error
         }
     }
 

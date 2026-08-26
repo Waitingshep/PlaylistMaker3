@@ -1,9 +1,9 @@
 package com.practicum.playlistmaker3.search.ui
 
-sealed interface SearchUiState {
-    object Loading : SearchUiState
-    data class Content(val tracks: List<TrackUi>) : SearchUiState
-    data class History(val tracks: List<TrackUi>) : SearchUiState
-    object Empty : SearchUiState
-    object Error : SearchUiState
+sealed interface SearchState {
+    object Loading : SearchState
+    data class Content(val tracks: List<TrackUi>) : SearchState
+    data class History(val tracks: List<TrackUi>) : SearchState
+    object Empty : SearchState
+    object Error : SearchState
 }

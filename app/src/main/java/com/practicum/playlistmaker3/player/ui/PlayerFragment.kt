@@ -1,6 +1,5 @@
 package com.practicum.playlistmaker3.player.ui
 
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -38,6 +37,7 @@ class PlayerFragment : Fragment() {
     private lateinit var countryValueTextView: TextView
     private lateinit var currentTimeTextView: TextView
     private lateinit var playButton: ImageButton
+    private lateinit var favoriteButton: ImageButton
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_player, container, false)
@@ -61,9 +61,11 @@ class PlayerFragment : Fragment() {
         countryValueTextView = view.findViewById(R.id.countryValueTextView)
         currentTimeTextView = view.findViewById(R.id.currentTimeTextView)
         playButton = view.findViewById(R.id.playButton)
+        favoriteButton = view.findViewById(R.id.favoriteButton)
 
         setupBackButton()
         setupPlayButton()
+        setupFavoriteButton()
         observeViewModel()
         loadTrack()
     }
@@ -87,6 +89,20 @@ class PlayerFragment : Fragment() {
         }
     }
 
+    private fun setupFavoriteButton() {
+        favoriteButton.setOnClickListener {
+            viewModel.onFavoriteClicked()
+        }
+    }
+
+    private fun updateFavoriteButton(isFavorite: Boolean) {
+        if (isFavorite) {
+            favoriteButton.setImageResource(R.drawable.ic_favorite_filled_51)
+        } else {
+            favoriteButton.setImageResource(R.drawable.ic_favorite_51)
+        }
+    }
+
     private fun observeViewModel() {
         viewModel.state.observe(viewLifecycleOwner) { state ->
             when (state) {
@@ -94,14 +110,19 @@ class PlayerFragment : Fragment() {
                     displayTrackInfo(state.track)
                     playButton.setImageResource(R.drawable.ic_play_button_100)
                     currentTimeTextView.text = getString(R.string.default_track_time)
+                    updateFavoriteButton(state.isFavorite)
                 }
                 is PlayerState.Playing -> {
+                    displayTrackInfo(state.track)
                     playButton.setImageResource(R.drawable.ic_pause_button_100)
                     currentTimeTextView.text = formatTime(state.currentPosition)
+                    updateFavoriteButton(state.isFavorite)
                 }
                 is PlayerState.Paused -> {
+                    displayTrackInfo(state.track)
                     playButton.setImageResource(R.drawable.ic_play_button_100)
                     currentTimeTextView.text = formatTime(state.currentPosition)
+                    updateFavoriteButton(state.isFavorite)
                 }
                 else -> {}
             }
@@ -110,6 +131,7 @@ class PlayerFragment : Fragment() {
 
     private fun loadTrack() {
         val args = arguments?.getParcelable<TrackUi>("track")
+        android.util.Log.d("PlayerFragment", "Track from arguments: isFavorite = ${args?.isFavorite}")
         if (args != null) {
             viewModel.loadTrack(args)
         }
