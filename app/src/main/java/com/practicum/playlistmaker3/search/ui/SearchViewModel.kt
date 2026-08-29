@@ -24,11 +24,28 @@ class SearchViewModel(
     private var searchJob: Job? = null
     private var lastResult: List<Track>? = null
 
+    private var currentQuery: String = ""
+    private var hasSearchResults: Boolean = false
+
     fun loadHistory() {
-        viewModelScope.launch {
-            val history = getHistoryUseCase()
-            val uiHistory = history.map { TrackMapper.mapToUi(it) }
-            _state.value = SearchState.History(uiHistory)
+        if (!hasSearchResults || currentQuery.isEmpty()) {
+            viewModelScope.launch {
+                val history = getHistoryUseCase()
+                val uiHistory = history.map { TrackMapper.mapToUi(it) }
+                _state.value = SearchState.History(uiHistory)
+            }
+        }
+    }
+
+    fun restoreSearchState() {
+        if (hasSearchResults && lastResult != null && currentQuery.isNotEmpty()) {
+            showCachedResult()
+        } else if (currentQuery.isNotEmpty() && lastResult == null) {
+            viewModelScope.launch {
+                executeSearch(currentQuery)
+            }
+        } else {
+            loadHistory()
         }
     }
 
@@ -51,13 +68,20 @@ class SearchViewModel(
 
     fun restoreState(query: String) {
         if (query.isBlank()) {
+            currentQuery = ""
+            hasSearchResults = false
             loadHistory()
             return
         }
+
+        currentQuery = query
+
         if (query == lastQuery && lastResult != null) {
+            hasSearchResults = true
             showCachedResult()
             return
         }
+
         lastQuery = query
         viewModelScope.launch {
             executeSearch(query)
@@ -67,11 +91,15 @@ class SearchViewModel(
     fun searchDebounce(query: String) {
         searchJob?.cancel()
         if (query.isBlank()) {
+            currentQuery = ""
+            hasSearchResults = false
             lastQuery = ""
             lastResult = null
             loadHistory()
             return
         }
+
+        currentQuery = query
 
         if (query != lastQuery) {
             lastResult = null
@@ -83,6 +111,7 @@ class SearchViewModel(
         searchJob = viewModelScope.launch {
             delay(2000L)
             if (query == lastQuery && lastResult != null) {
+                hasSearchResults = true
                 showCachedResult()
                 return@launch
             }
@@ -92,6 +121,7 @@ class SearchViewModel(
 
     private suspend fun executeSearch(query: String) {
         if (query == lastQuery && lastResult != null) {
+            hasSearchResults = true
             showCachedResult()
             return
         }
@@ -101,15 +131,18 @@ class SearchViewModel(
             result.fold(
                 onSuccess = { tracks ->
                     lastResult = tracks
+                    hasSearchResults = true
                     val uiTracks = tracks.map { TrackMapper.mapToUi(it) }
                     _state.value = if (uiTracks.isEmpty()) SearchState.Empty else SearchState.Content(uiTracks)
                 },
                 onFailure = {
+                    hasSearchResults = false
                     _state.value = SearchState.Error
                 }
             )
         } catch (e: Exception) {
             e.printStackTrace()
+            hasSearchResults = false
             _state.value = SearchState.Error
         }
     }

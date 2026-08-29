@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.playlistmaker3.player.domain.usecase.PlayTrackUseCase
 import com.practicum.playlistmaker3.search.domain.models.Track
+import com.practicum.playlistmaker3.search.domain.repository.FavoriteRepository
 import com.practicum.playlistmaker3.search.domain.usecase.AddTrackToFavoriteUseCase
 import com.practicum.playlistmaker3.search.domain.usecase.RemoveTrackFromFavoriteUseCase
 import com.practicum.playlistmaker3.search.ui.TrackMapper
@@ -17,7 +18,8 @@ import kotlinx.coroutines.launch
 class PlayerViewModel(
     private val playTrackUseCase: PlayTrackUseCase,
     private val addToFavoriteUseCase: AddTrackToFavoriteUseCase,
-    private val removeFromFavoriteUseCase: RemoveTrackFromFavoriteUseCase
+    private val removeFromFavoriteUseCase: RemoveTrackFromFavoriteUseCase,
+    private val favoriteRepository: FavoriteRepository
 ) : ViewModel() {
 
     private val _state = MutableLiveData<PlayerState>()
@@ -30,33 +32,33 @@ class PlayerViewModel(
     private var isFavorite: Boolean = false
 
     fun loadTrack(trackUi: TrackUi) {
-        android.util.Log.d("PlayerViewModel", "loadTrack: isFavorite from UI = ${trackUi.isFavorite}")
+        viewModelScope.launch {
+            val track = TrackMapper.mapToDomain(trackUi)
+            currentTrack = track
+            isPrepared = false
+            currentPosition = 0
 
-        val track = TrackMapper.mapToDomain(trackUi)
-        currentTrack = track
-        isPrepared = false
-        currentPosition = 0
-        isFavorite = trackUi.isFavorite  // Сохраняем начальное состояние
-        track.isFavorite = isFavorite    // Обновляем в объекте Track
+            val favoriteIds = favoriteRepository.getFavoriteIds()
+            isFavorite = favoriteIds.contains(track.trackId)
+            track.isFavorite = isFavorite
 
-        android.util.Log.d("PlayerViewModel", "loadTrack: isFavorite after set = $isFavorite")
+            _state.value = PlayerState.Content(track, isFavorite)
 
-        _state.value = PlayerState.Content(track, isFavorite)
-
-        playTrackUseCase.release()
-        playTrackUseCase.prepare(track,
-            onPrepared = {
-                isPrepared = true
-                _state.value = PlayerState.Content(track, isFavorite)
-            },
-            onCompletion = {
-                stopUpdating()
-                isPrepared = false
-                currentPosition = 0
-                _state.value = PlayerState.Content(track, isFavorite)
-                playTrackUseCase.stop()
-            }
-        )
+            playTrackUseCase.release()
+            playTrackUseCase.prepare(track,
+                onPrepared = {
+                    isPrepared = true
+                    _state.value = PlayerState.Content(track, isFavorite)
+                },
+                onCompletion = {
+                    stopUpdating()
+                    isPrepared = false
+                    currentPosition = 0
+                    _state.value = PlayerState.Content(track, isFavorite)
+                    playTrackUseCase.stop()
+                }
+            )
+        }
     }
 
     fun onFavoriteClicked() {

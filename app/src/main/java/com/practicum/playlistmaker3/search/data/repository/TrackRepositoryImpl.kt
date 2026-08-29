@@ -2,14 +2,12 @@ package com.practicum.playlistmaker3.search.data.repository
 
 import com.practicum.playlistmaker3.search.data.network.ItunesApiService
 import com.practicum.playlistmaker3.search.domain.models.Track
-import com.practicum.playlistmaker3.search.domain.repository.FavoriteRepository
 import com.practicum.playlistmaker3.search.domain.repository.TrackRepository
 import retrofit2.HttpException
 import java.io.IOException
 
 class TrackRepositoryImpl(
-    private val apiService: ItunesApiService,
-    private val favoriteRepository: FavoriteRepository
+    private val apiService: ItunesApiService
 ) : TrackRepository {
 
     override suspend fun searchTracks(query: String): Result<List<Track>> {
@@ -19,13 +17,9 @@ class TrackRepositoryImpl(
             }
             val response = apiService.searchTracks(query)
             if (response.resultCount > 0) {
-                val favoriteIds = favoriteRepository.getFavoriteIds()
-
                 val tracks = response.results.mapNotNull { itunesTrack ->
                     if (!itunesTrack.trackName.isNullOrBlank() || !itunesTrack.artistName.isNullOrBlank()) {
-                        val track = Track.fromItunesTrack(itunesTrack)
-                        track.isFavorite = favoriteIds.contains(track.trackId)
-                        track
+                        Track.fromItunesTrack(itunesTrack)
                     } else null
                 }
                 Result.success(tracks)

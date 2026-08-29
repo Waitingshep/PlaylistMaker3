@@ -131,7 +131,6 @@ class PlayerFragment : Fragment() {
 
     private fun loadTrack() {
         val args = arguments?.getParcelable<TrackUi>("track")
-        android.util.Log.d("PlayerFragment", "Track from arguments: isFavorite = ${args?.isFavorite}")
         if (args != null) {
             viewModel.loadTrack(args)
         }

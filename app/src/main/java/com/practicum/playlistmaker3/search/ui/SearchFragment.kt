@@ -72,9 +72,19 @@ class SearchFragment : Fragment() {
             searchEditText.removeTextChangedListener(textWatcher)
             searchEditText.setText(restoredText)
             searchEditText.addTextChangedListener(textWatcher)
+            searchText = restoredText
             viewModel.restoreState(restoredText)
         } else {
-            viewModel.loadHistory()
+            viewModel.restoreSearchState()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (searchText.isNotEmpty()) {
+            viewModel.restoreState(searchText)
+        } else {
+            viewModel.restoreSearchState()
         }
     }
 

@@ -31,7 +31,7 @@ val dataModule = module {
     }
 
     single<TrackRepository> {
-        TrackRepositoryImpl(get(), get())
+        TrackRepositoryImpl(get())
     }
 
     single<FavoriteRepository> {

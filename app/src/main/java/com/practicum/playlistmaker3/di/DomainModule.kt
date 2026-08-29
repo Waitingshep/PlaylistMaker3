@@ -12,7 +12,7 @@ import org.koin.dsl.module
 val domainModule = module {
     // Search
     single<SearchTracksUseCase> { SearchTracksUseCaseImpl(get()) }
-    single<GetSearchHistoryUseCase> { GetSearchHistoryUseCaseImpl(get(), get()) }  // ДОБАВЛЯЕМ favoriteRepository
+    single<GetSearchHistoryUseCase> { GetSearchHistoryUseCaseImpl(get(), get()) }
     single<AddTrackToHistoryUseCase> { AddTrackToHistoryUseCaseImpl(get()) }
     single<ClearSearchHistoryUseCase> { ClearSearchHistoryUseCaseImpl(get()) }
 
