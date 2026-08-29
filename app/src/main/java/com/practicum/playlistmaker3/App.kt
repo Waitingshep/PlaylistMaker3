@@ -2,7 +2,12 @@ package com.practicum.playlistmaker3
 
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
-import com.practicum.playlistmaker3.di.*
+import com.practicum.playlistmaker3.di.dataModule
+import com.practicum.playlistmaker3.di.databaseModule
+import com.practicum.playlistmaker3.di.domainModule
+import com.practicum.playlistmaker3.di.networkModule
+import com.practicum.playlistmaker3.di.settingsModule
+import com.practicum.playlistmaker3.di.viewModelModule
 import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
 import com.practicum.playlistmaker3.settings.domain.usecase.GetThemeUseCase
 import org.koin.android.ext.koin.androidContext
