@@ -14,7 +14,8 @@ data class Track(
     val releaseDate: String? = null,
     val primaryGenreName: String? = null,
     val country: String? = null,
-    val previewUrl: String? = null
+    val previewUrl: String? = null,
+    var isFavorite: Boolean = false
 ) {
     val formattedTime: String
         get() = try {
@@ -42,7 +43,8 @@ data class Track(
                 releaseDate = itunesTrack.releaseDate,
                 primaryGenreName = itunesTrack.primaryGenreName,
                 country = itunesTrack.country,
-                previewUrl = itunesTrack.previewUrl
+                previewUrl = itunesTrack.previewUrl,
+                isFavorite = false
             )
         }
     }

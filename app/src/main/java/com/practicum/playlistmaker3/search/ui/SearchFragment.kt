@@ -72,9 +72,19 @@ class SearchFragment : Fragment() {
             searchEditText.removeTextChangedListener(textWatcher)
             searchEditText.setText(restoredText)
             searchEditText.addTextChangedListener(textWatcher)
+            searchText = restoredText
             viewModel.restoreState(restoredText)
         } else {
-            viewModel.loadHistory()
+            viewModel.restoreSearchState()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (searchText.isNotEmpty()) {
+            viewModel.restoreState(searchText)
+        } else {
+            viewModel.restoreSearchState()
         }
     }
 
@@ -164,7 +174,6 @@ class SearchFragment : Fragment() {
         historyRecyclerView.adapter = historyAdapter
     }
 
-    // Новая реализация debounce кликов через корутины
     private fun openPlayerFragmentWithDebounce(trackUi: TrackUi) {
         clickDebounceJob?.cancel()
         clickDebounceJob = viewLifecycleOwner.lifecycleScope.launch {
@@ -177,13 +186,13 @@ class SearchFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        viewModel.uiState.observe(viewLifecycleOwner) { state ->
+        viewModel.state.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is SearchUiState.Loading -> showLoading()
-                is SearchUiState.Content -> showContent(state.tracks)
-                is SearchUiState.History -> showHistory(state.tracks)
-                is SearchUiState.Empty -> showEmpty()
-                is SearchUiState.Error -> showError()
+                is SearchState.Loading -> showLoading()
+                is SearchState.Content -> showContent(state.tracks)
+                is SearchState.History -> showHistory(state.tracks)
+                is SearchState.Empty -> showEmpty()
+                is SearchState.Error -> showError()
             }
         }
     }
@@ -251,5 +260,12 @@ class SearchFragment : Fragment() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(SEARCH_TEXT_KEY, searchText)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        clickDebounceJob?.cancel()
+        trackAdapter.updateTracks(emptyList())
+        historyAdapter.updateTracks(emptyList())
     }
 }

@@ -3,17 +3,19 @@ package com.practicum.playlistmaker3
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import com.practicum.playlistmaker3.di.dataModule
+import com.practicum.playlistmaker3.di.databaseModule
 import com.practicum.playlistmaker3.di.domainModule
 import com.practicum.playlistmaker3.di.networkModule
+import com.practicum.playlistmaker3.di.settingsModule
 import com.practicum.playlistmaker3.di.viewModelModule
 import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
 import com.practicum.playlistmaker3.settings.domain.usecase.GetThemeUseCase
-import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.koin.core.context.startKoin
-import org.koin.java.KoinJavaComponent.inject
 
-class App : Application() {
+class App : Application(), KoinComponent {
 
     override fun onCreate() {
         super.onCreate()
@@ -22,13 +24,15 @@ class App : Application() {
             androidContext(this@App)
             modules(
                 networkModule,
+                databaseModule,
                 dataModule,
                 domainModule,
-                viewModelModule
+                viewModelModule,
+                settingsModule
             )
         }
 
-        val getThemeUseCase: GetThemeUseCase by inject()
+        val getThemeUseCase: GetThemeUseCase = get()
         val themeMode = getThemeUseCase()
         applyTheme(themeMode == ThemeMode.DARK)
     }

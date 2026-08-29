@@ -16,7 +16,8 @@ data class TrackUi(
     val releaseDate: String? = null,
     val primaryGenreName: String? = null,
     val country: String? = null,
-    val previewUrl: String? = null
+    val previewUrl: String? = null,
+    val isFavorite: Boolean = false
 ) : Parcelable {
     val formattedTime: String
         get() = try {

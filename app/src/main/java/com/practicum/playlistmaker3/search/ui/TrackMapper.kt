@@ -14,7 +14,8 @@ object TrackMapper {
             releaseDate = track.releaseDate,
             primaryGenreName = track.primaryGenreName,
             country = track.country,
-            previewUrl = track.previewUrl
+            previewUrl = track.previewUrl,
+            isFavorite = track.isFavorite
         )
     }
 
@@ -29,7 +30,8 @@ object TrackMapper {
             releaseDate = trackUi.releaseDate,
             primaryGenreName = trackUi.primaryGenreName,
             country = trackUi.country,
-            previewUrl = trackUi.previewUrl
+            previewUrl = trackUi.previewUrl,
+            isFavorite = trackUi.isFavorite
         )
     }
 }

@@ -3,29 +3,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center_horizontal"
-    android:padding="16dp"
     android:background="@color/windowBackground">
 
-    <ImageView
-        android:id="@+id/emptyFavoritesImage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_nothing_found_120"
-        android:visibility="gone"
-        android:layout_marginTop="106dp"/>
-
-    <TextView
-        android:id="@+id/emptyFavoritesText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/no_favorites"
-        android:textSize="19sp"
-        android:textFontWeight="500"
-        android:fontFamily="@font/ys_display_medium"
-        android:textColor="@color/placeholder_text"
-        android:gravity="center"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/favoritesRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/emptyFavoritesImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="106dp"
+            android:src="@drawable/ic_nothing_found_120"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/emptyFavoritesText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/no_favorites"
+            android:textSize="19sp"
+            android:textFontWeight="500"
+            android:fontFamily="@font/ys_display_medium"
+            android:textColor="@color/placeholder_text"
+            android:gravity="center"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
 </LinearLayout>
