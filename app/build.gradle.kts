@@ -40,7 +40,7 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
+    implementation(libs.google.material.v1110)  // ← Оставляем только эту
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
@@ -60,8 +60,6 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.lifecycle.runtime.ktx)
-
-    implementation(libs.google.material.v1110)
 
     // Koin
     implementation(libs.koin.android)
