@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="312dp"
+    android:height="312dp"
+    android:viewportWidth="312"
+    android:viewportHeight="312">
+
+    <!-- Верх -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M8,1 L23,1 M53,1 L83,1 M113,1 L143,1 M173,1 L203,1 M233,1 L263,1 M289,1 L304,1"
+        android:strokeColor="#AEAFB4"
+        android:strokeWidth="1" />
+
+    <!-- Право -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M311,8 L311,23 M311,53 L311,83 M311,113 L311,143 M311,173 L311,203 M311,233 L311,263 M311,289 L311,304"
+        android:strokeColor="#AEAFB4"
+        android:strokeWidth="1" />
+
+    <!-- Низ -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M304,311 L289,311 M263,311 L233,311 M203,311 L173,311 M143,311 L113,311 M83,311 L53,311 M23,311 L8,311"
+        android:strokeColor="#AEAFB4"
+        android:strokeWidth="1" />
+
+    <!-- Лево -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M1,304 L1,289 M1,263 L1,233 M1,203 L1,173 M1,143 L1,113 M1,83 L1,53 M1,23 L1,8"
+        android:strokeColor="#AEAFB4"
+        android:strokeWidth="1" />
+
+    <!-- Верхний левый угол -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M8,1 A8,8 0,0 0,1,8"
+        android:strokeColor="#AEAFB4"
+        android:strokeWidth="1" />
+
+    <!-- Верхний правый угол -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M304,1 A8,8 0,0 1,311,8"
+        android:strokeColor="#AEAFB4"
+        android:strokeWidth="1" />
+
+    <!-- Нижний правый угол -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M311,304 A8,8 0,0 1,304,311"
+        android:strokeColor="#AEAFB4"
+        android:strokeWidth="1" />
+
+    <!-- Нижний левый угол -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M1,304 A8,8 0,0 0 8,311"
+        android:strokeColor="#AEAFB4"
+        android:strokeWidth="1" />
+
+</vector>

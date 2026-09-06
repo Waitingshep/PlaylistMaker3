@@ -4,6 +4,9 @@ import android.content.Context
 import com.google.gson.Gson
 import com.practicum.playlistmaker3.player.data.repository.PlayerRepositoryImpl
 import com.practicum.playlistmaker3.player.domain.repository.PlayerRepository
+import com.practicum.playlistmaker3.playlist.data.repository.PlaylistRepositoryImpl
+import com.practicum.playlistmaker3.playlist.domain.repository.PlaylistRepository
+import com.practicum.playlistmaker3.search.data.db.AppDatabase
 import com.practicum.playlistmaker3.search.data.repository.FavoriteRepositoryImpl
 import com.practicum.playlistmaker3.search.data.repository.SearchHistoryRepositoryImpl
 import com.practicum.playlistmaker3.search.data.repository.TrackRepositoryImpl
@@ -16,6 +19,9 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val dataModule = module {
+    single { get<AppDatabase>().playlistDao() }
+    single { get<AppDatabase>().playlistTrackDao() }
+
     single<PlayerRepository> { PlayerRepositoryImpl() }
 
     single<Gson> { Gson() }
@@ -36,5 +42,9 @@ val dataModule = module {
 
     single<FavoriteRepository> {
         FavoriteRepositoryImpl(get())
+    }
+
+    single<PlaylistRepository> {
+        PlaylistRepositoryImpl(get(), get(), get())  // playlistDao, playlistTrackDao, Gson
     }
 }

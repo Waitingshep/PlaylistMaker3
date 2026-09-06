@@ -24,4 +24,6 @@
     <color name="media_button">#FFFFFF</color>
     <color name="media_button_text">#1A1B22</color>
     <color name="bottom_nav_line">#E6E8EB</color>
+    <color name="search_text_hint_dark">#FFFFFF</color>
+    <color name="button_inactive">#AEAFB4</color>
 </resources>
