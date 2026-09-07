@@ -3,6 +3,7 @@ package com.practicum.playlistmaker3.main.ui
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.practicum.playlistmaker3.R
@@ -22,10 +23,10 @@ class MainActivity : AppCompatActivity() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.playerFragment, R.id.createPlaylistFragment -> {
-                    bottomNavContainer.visibility = View.GONE
+                    bottomNavContainer.isVisible = false
                 }
                 else -> {
-                    bottomNavContainer.visibility = View.VISIBLE
+                    bottomNavContainer.isVisible = true
                 }
             }
         }

@@ -9,75 +9,73 @@ import com.practicum.playlistmaker3.playlist.domain.models.Playlist
 import com.practicum.playlistmaker3.playlist.domain.usecase.CreatePlaylistUseCase
 import kotlinx.coroutines.launch
 
+data class CreatePlaylistState(
+    val name: String = "",
+    val description: String = "",
+    val coverUri: Uri? = null,
+    val coverPath: String? = null,
+    val isCreateEnabled: Boolean = false,
+    val creationResult: Long? = null,
+    val showDiscardDialog: Boolean = false,
+    val isDataChanged: Boolean = false
+)
+
 class CreatePlaylistViewModel(
     private val createPlaylistUseCase: CreatePlaylistUseCase
 ) : ViewModel() {
 
-    private val _playlistName = MutableLiveData<String>("")
-    val playlistName: LiveData<String> = _playlistName
-
-    private val _playlistDescription = MutableLiveData<String>("")
-    val playlistDescription: LiveData<String> = _playlistDescription
-
-    private val _coverUri = MutableLiveData<Uri?>(null)
-    val coverUri: LiveData<Uri?> = _coverUri
-
-    private val _isCreateEnabled = MutableLiveData<Boolean>(false)
-    val isCreateEnabled: LiveData<Boolean> = _isCreateEnabled
-
-    private val _creationResult = MutableLiveData<Long?>()
-    val creationResult: LiveData<Long?> = _creationResult
-
-    private val _showDiscardDialog = MutableLiveData<Boolean>(false)
-    val showDiscardDialog: LiveData<Boolean> = _showDiscardDialog
-
-    private var isDataChanged = false
-    private var savedCoverPath: String? = null
+    private val _state = MutableLiveData(CreatePlaylistState())
+    val state: LiveData<CreatePlaylistState> = _state
 
     fun updateName(name: String) {
-        _playlistName.value = name
-        isDataChanged = true
-        updateCreateButtonState()
+        _state.value = _state.value?.copy(
+            name = name,
+            isDataChanged = true,
+            isCreateEnabled = name.isNotBlank()
+        )
     }
 
     fun updateDescription(description: String) {
-        _playlistDescription.value = description
-        isDataChanged = true
+        _state.value = _state.value?.copy(
+            description = description,
+            isDataChanged = true
+        )
     }
 
     fun updateCover(uri: Uri?) {
-        _coverUri.value = uri
-        isDataChanged = true
+        _state.value = _state.value?.copy(
+            coverUri = uri,
+            isDataChanged = true
+        )
     }
 
     fun setCoverPath(path: String?) {
-        savedCoverPath = path
-    }
-
-    private fun updateCreateButtonState() {
-        val name = _playlistName.value ?: ""
-        _isCreateEnabled.value = name.isNotBlank()
+        _state.value = _state.value?.copy(coverPath = path)
     }
 
     fun createPlaylist() {
-        val name = _playlistName.value ?: ""
+        val currentState = _state.value ?: return
+        val name = currentState.name
         if (name.isBlank()) return
 
         viewModelScope.launch {
             val playlist = Playlist(
                 name = name,
-                description = _playlistDescription.value,
-                coverPath = savedCoverPath
+                description = currentState.description,
+                coverPath = currentState.coverPath
             )
             val id = createPlaylistUseCase(playlist)
-            _creationResult.value = id
-            isDataChanged = false
+            _state.value = _state.value?.copy(
+                creationResult = id,
+                isDataChanged = false
+            )
         }
     }
 
     fun onBackPressed(): Boolean {
-        return if (isDataChanged) {
-            _showDiscardDialog.value = true
+        val currentState = _state.value ?: return false
+        return if (currentState.isDataChanged) {
+            _state.value = currentState.copy(showDiscardDialog = true)
             true
         } else {
             false
@@ -85,15 +83,17 @@ class CreatePlaylistViewModel(
     }
 
     fun onDiscardDialogConfirmed() {
-        _showDiscardDialog.value = false
-        isDataChanged = false
+        _state.value = _state.value?.copy(
+            showDiscardDialog = false,
+            isDataChanged = false
+        )
     }
 
     fun onDiscardDialogCancelled() {
-        _showDiscardDialog.value = false
+        _state.value = _state.value?.copy(showDiscardDialog = false)
     }
 
     fun resetCreationResult() {
-        _creationResult.value = null
+        _state.value = _state.value?.copy(creationResult = null)
     }
 }

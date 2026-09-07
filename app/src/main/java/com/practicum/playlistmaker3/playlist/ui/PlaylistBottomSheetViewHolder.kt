@@ -20,11 +20,11 @@ class PlaylistBottomSheetViewHolder(itemView: View) : RecyclerView.ViewHolder(it
         nameTextView.text = playlist.name
 
         val trackCount = playlist.trackCount
-        trackCountTextView.text = when (trackCount) {
-            0 -> itemView.context.getString(R.string.no_tracks)
-            1 -> itemView.context.getString(R.string.one_track)
-            else -> itemView.context.getString(R.string.tracks_count, trackCount)
-        }
+        trackCountTextView.text = itemView.context.resources.getQuantityString(
+            R.plurals.tracks_count,
+            trackCount,
+            trackCount
+        )
 
         val coverPath = playlist.coverPath
         Glide.with(itemView)

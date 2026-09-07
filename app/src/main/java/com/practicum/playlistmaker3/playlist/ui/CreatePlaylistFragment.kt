@@ -239,31 +239,26 @@ class CreatePlaylistFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-
-        viewModel.playlistName.observe(viewLifecycleOwner) { name ->
-            updateCreateButtonState(name)
-        }
-
-        viewModel.isCreateEnabled.observe(viewLifecycleOwner) {
-            updateCreateButtonState(
-                viewModel.playlistName.value ?: ""
-            )
-        }
-
-        viewModel.creationResult.observe(viewLifecycleOwner) { id ->
-            if (id != null && id > 0) {
-                val name = viewModel.playlistName.value ?: ""
-                val message = getString(R.string.playlist_created, name)
+        viewModel.state.observe(viewLifecycleOwner) { state ->
+            updateCreateButtonState(state)
+            if (state.creationResult != null && state.creationResult > 0) {
+                val message = getString(R.string.playlist_created, state.name)
                 showSuccessSnackbar(message)
                 viewModel.resetCreationResult()
                 findNavController().popBackStack()
             }
-        }
-
-        viewModel.showDiscardDialog.observe(viewLifecycleOwner) { show ->
-            if (show) {
+            if (state.showDiscardDialog) {
                 showDiscardDialog()
             }
+        }
+    }
+
+    private fun updateCreateButtonState(state: CreatePlaylistState) {
+        createButton.isEnabled = state.isCreateEnabled
+        if (state.isCreateEnabled) {
+            createButton.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.blue)
+        } else {
+            createButton.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.button_inactive)
         }
     }
 
