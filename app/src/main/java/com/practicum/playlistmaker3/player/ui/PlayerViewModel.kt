@@ -5,6 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.playlistmaker3.player.domain.usecase.PlayTrackUseCase
+import com.practicum.playlistmaker3.playlist.domain.models.Playlist
+import com.practicum.playlistmaker3.playlist.domain.usecase.AddTrackToPlaylistUseCase
+import com.practicum.playlistmaker3.playlist.domain.usecase.GetPlaylistsUseCase
 import com.practicum.playlistmaker3.search.domain.models.Track
 import com.practicum.playlistmaker3.search.domain.repository.FavoriteRepository
 import com.practicum.playlistmaker3.search.domain.usecase.AddTrackToFavoriteUseCase
@@ -13,17 +16,34 @@ import com.practicum.playlistmaker3.search.ui.TrackMapper
 import com.practicum.playlistmaker3.search.ui.TrackUi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+
+sealed class PlaylistAddStatus {
+    data class Success(val playlistName: String) : PlaylistAddStatus()
+    data class AlreadyExists(val playlistName: String) : PlaylistAddStatus()
+}
 
 class PlayerViewModel(
     private val playTrackUseCase: PlayTrackUseCase,
     private val addToFavoriteUseCase: AddTrackToFavoriteUseCase,
     private val removeFromFavoriteUseCase: RemoveTrackFromFavoriteUseCase,
-    private val favoriteRepository: FavoriteRepository
+    private val favoriteRepository: FavoriteRepository,
+    private val getPlaylistsUseCase: GetPlaylistsUseCase,
+    private val addTrackToPlaylistUseCase: AddTrackToPlaylistUseCase
 ) : ViewModel() {
 
     private val _state = MutableLiveData<PlayerState>()
     val state: LiveData<PlayerState> = _state
+
+    private val _playlists = MutableLiveData<List<Playlist>>(emptyList())
+    val playlists: LiveData<List<Playlist>> = _playlists
+
+    private val _playlistAddStatus = MutableLiveData<PlaylistAddStatus?>()
+    val playlistAddStatus: LiveData<PlaylistAddStatus?> = _playlistAddStatus
+
+    private val _showPlaylistBottomSheet = MutableLiveData<Boolean>(false)
+    val showPlaylistBottomSheet: LiveData<Boolean> = _showPlaylistBottomSheet
 
     private var updateJob: Job? = null
     private var currentTrack: Track? = null
@@ -59,6 +79,45 @@ class PlayerViewModel(
                 }
             )
         }
+    }
+
+    fun loadPlaylists() {
+        viewModelScope.launch {
+            getPlaylistsUseCase().collect { playlists ->
+                _playlists.value = playlists
+            }
+        }
+    }
+
+    fun showPlaylistBottomSheet() {
+        _showPlaylistBottomSheet.value = true
+        loadPlaylists()
+    }
+
+    fun hidePlaylistBottomSheet() {
+        _showPlaylistBottomSheet.value = false
+    }
+
+    fun addTrackToPlaylist(playlist: Playlist) {
+        val track = currentTrack ?: return
+        viewModelScope.launch {
+            if (playlist.trackIds.contains(track.trackId)) {
+                _playlistAddStatus.value = PlaylistAddStatus.AlreadyExists(playlist.name)
+            } else {
+                val success = addTrackToPlaylistUseCase(track, playlist)
+                if (success) {
+                    _playlistAddStatus.value = PlaylistAddStatus.Success(playlist.name)
+                    loadPlaylists()
+                }
+            }
+            _showPlaylistBottomSheet.value = false
+            delay(2000)
+            _playlistAddStatus.value = null
+        }
+    }
+
+    fun clearPlaylistAddStatus() {
+        _playlistAddStatus.value = null
     }
 
     fun onFavoriteClicked() {

@@ -2,6 +2,9 @@ package com.practicum.playlistmaker3.di
 
 import com.practicum.playlistmaker3.player.domain.usecase.PlayTrackUseCase
 import com.practicum.playlistmaker3.player.domain.usecase.PlayTrackUseCaseImpl
+import com.practicum.playlistmaker3.playlist.domain.usecase.AddTrackToPlaylistUseCase
+import com.practicum.playlistmaker3.playlist.domain.usecase.CreatePlaylistUseCase
+import com.practicum.playlistmaker3.playlist.domain.usecase.GetPlaylistsUseCase
 import com.practicum.playlistmaker3.search.domain.usecase.*
 import com.practicum.playlistmaker3.settings.domain.usecase.GetThemeUseCase
 import com.practicum.playlistmaker3.settings.domain.usecase.GetThemeUseCaseImpl
@@ -27,4 +30,9 @@ val domainModule = module {
 
     // Player
     single<PlayTrackUseCase> { PlayTrackUseCaseImpl(get()) }
+
+    // Playlist
+    single<CreatePlaylistUseCase> { CreatePlaylistUseCase(get()) }
+    single<GetPlaylistsUseCase> { GetPlaylistsUseCase(get()) }
+    single<AddTrackToPlaylistUseCase> { AddTrackToPlaylistUseCase(get()) }
 }

@@ -22,7 +22,7 @@
             android:id="@+id/emptyFavoritesImage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="106dp"
+            android:layout_marginTop="90dp"
             android:src="@drawable/ic_nothing_found_120"
             android:visibility="gone" />
 

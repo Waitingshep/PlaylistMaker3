@@ -32,7 +32,9 @@
         app:tabTextColor="@color/media_h2"
         app:tabTextAppearance="@android:style/TextAppearance.Widget.TabWidget"
         android:fontFamily="@font/ys_display_regular"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:layout_marginBottom="16dp"
+        />
 
 
     <!-- ViewPager2 -->

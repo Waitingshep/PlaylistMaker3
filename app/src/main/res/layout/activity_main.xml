@@ -15,19 +15,29 @@
         app:navGraph="@navigation/nav_graph"
         app:defaultNavHost="true" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/bottom_nav_line" />
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        style="@style/BottomNavTextStyle"
-        android:id="@+id/bottomNavigationView"
+    <!-- Контейнер для линии и меню -->
+    <LinearLayout
+        android:id="@+id/bottomNavigationContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/windowBackground"
-        app:itemIconTint="@color/bottom_nav_item_selector"
-        app:itemTextColor="@color/bottom_nav_item_selector"
-        app:menu="@menu/bottom_navigation_menu" />
+        android:orientation="vertical">
+
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/bottom_nav_line" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            style="@style/BottomNavTextStyle"
+            android:id="@+id/bottomNavigationView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/windowBackground"
+            app:itemIconTint="@color/bottom_nav_item_selector"
+            app:itemTextColor="@color/bottom_nav_item_selector"
+            app:menu="@menu/bottom_navigation_menu" />
+
+    </LinearLayout>
 
 </LinearLayout>
