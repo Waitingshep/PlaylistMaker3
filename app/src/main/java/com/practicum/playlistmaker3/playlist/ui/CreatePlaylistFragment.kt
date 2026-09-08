@@ -36,9 +36,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 import java.io.FileOutputStream
 
-class CreatePlaylistFragment : Fragment() {
+open class CreatePlaylistFragment : Fragment() {
 
-    private val viewModel: CreatePlaylistViewModel by viewModel()
+    private val _viewModel: CreatePlaylistViewModel by viewModel()
+    protected open val viewModel: CreatePlaylistViewModel get() = _viewModel
 
     private lateinit var backButton: ImageButton
     private lateinit var coverPlaceholder: FrameLayout
@@ -112,6 +113,37 @@ class CreatePlaylistFragment : Fragment() {
 
         nameEditText.setPaintFlags(nameEditText.paintFlags and Paint.UNDERLINE_TEXT_FLAG.inv())
         descriptionEditText.setPaintFlags(descriptionEditText.paintFlags and Paint.UNDERLINE_TEXT_FLAG.inv())
+
+
+        val args = arguments
+        val playlistId = args?.getLong("playlistId") ?: 0L
+        val playlistName = args?.getString("playlistName")
+        val playlistDescription = args?.getString("playlistDescription")
+        val playlistCoverPath = args?.getString("playlistCoverPath")
+
+
+        if (playlistId > 0) {
+            viewModel.setPlaylistId(playlistId)
+        }
+
+        if (!playlistName.isNullOrEmpty()) {
+            nameEditText.setText(playlistName)
+            viewModel.updateName(playlistName)
+        }
+
+        if (!playlistDescription.isNullOrEmpty()) {
+            descriptionEditText.setText(playlistDescription)
+            viewModel.updateDescription(playlistDescription)
+        }
+
+        if (!playlistCoverPath.isNullOrEmpty()) {
+            Glide.with(this)
+                .load(playlistCoverPath)
+                .transform(CenterCrop(), RoundedCorners(dpToPx(8)))
+                .into(coverImageView)
+            coverIcon.visibility = View.GONE
+            coverImageView.visibility = View.VISIBLE
+        }
 
         updateHintColors(
             nameInputLayout,
@@ -242,7 +274,11 @@ class CreatePlaylistFragment : Fragment() {
         viewModel.state.observe(viewLifecycleOwner) { state ->
             updateCreateButtonState(state)
             if (state.creationResult != null && state.creationResult > 0) {
-                val message = getString(R.string.playlist_created, state.name)
+                val message = if (state.isEditMode) {
+                    getString(R.string.playlist_updated, state.name)
+                } else {
+                    getString(R.string.playlist_created, state.name)
+                }
                 showSuccessSnackbar(message)
                 viewModel.resetCreationResult()
                 findNavController().popBackStack()
@@ -309,30 +345,6 @@ class CreatePlaylistFragment : Fragment() {
         })
 
         snackbar.show()
-    }
-
-    private fun updateCreateButtonState(name: String) {
-
-        val isEnabled = name.isNotBlank()
-
-        createButton.isEnabled = isEnabled
-
-        if (isEnabled) {
-
-            createButton.backgroundTintList =
-                ContextCompat.getColorStateList(
-                    requireContext(),
-                    R.color.blue
-                )
-
-        } else {
-
-            createButton.backgroundTintList =
-                ContextCompat.getColorStateList(
-                    requireContext(),
-                    R.color.button_inactive
-                )
-        }
     }
 
     private fun updateHintColors(
@@ -466,8 +478,7 @@ class CreatePlaylistFragment : Fragment() {
             .show()
     }
 
-    private fun handleBackPress() {
-
+    protected open fun handleBackPress() {
         val shouldShowDialog =
             viewModel.onBackPressed()
 
