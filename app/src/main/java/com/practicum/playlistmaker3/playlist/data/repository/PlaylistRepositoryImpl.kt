@@ -10,6 +10,7 @@ import com.practicum.playlistmaker3.playlist.domain.models.Playlist
 import com.practicum.playlistmaker3.playlist.domain.repository.PlaylistRepository
 import com.practicum.playlistmaker3.search.domain.models.Track
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class PlaylistRepositoryImpl(
@@ -26,6 +27,11 @@ class PlaylistRepositoryImpl(
     override suspend fun updatePlaylist(playlist: Playlist) {
         val entity = mapToEntity(playlist)
         playlistDao.update(entity)
+    }
+
+    override suspend fun deletePlaylist(playlistId: Long) {
+        playlistDao.deleteById(playlistId)
+        cleanupOrphanTracks()
     }
 
     override fun getPlaylists(): Flow<List<Playlist>> {
@@ -55,7 +61,8 @@ class PlaylistRepositoryImpl(
             releaseDate = track.releaseDate,
             primaryGenreName = track.primaryGenreName,
             country = track.country,
-            previewUrl = track.previewUrl
+            previewUrl = track.previewUrl,
+            timestamp = System.currentTimeMillis()
         )
         playlistTrackDao.insert(trackEntity)
 
@@ -82,9 +89,68 @@ class PlaylistRepositoryImpl(
             releaseDate = track.releaseDate,
             primaryGenreName = track.primaryGenreName,
             country = track.country,
-            previewUrl = track.previewUrl
+            previewUrl = track.previewUrl,
+            timestamp = System.currentTimeMillis()
         )
         playlistTrackDao.insert(trackEntity)
+    }
+
+    override suspend fun getTracksByIds(trackIds: List<Long>): List<Track> {
+        if (trackIds.isEmpty()) return emptyList()
+        val allTracks = playlistTrackDao.getAllTracks().first()
+        return allTracks
+            .filter { trackIds.contains(it.trackId) }
+            .map { entity ->
+                Track(
+                    trackId = entity.trackId,
+                    trackName = entity.trackName,
+                    artistName = entity.artistName,
+                    trackTimeMillis = entity.trackTimeMillis,
+                    artworkUrl100 = entity.artworkUrl100,
+                    collectionName = entity.collectionName,
+                    releaseDate = entity.releaseDate,
+                    primaryGenreName = entity.primaryGenreName,
+                    country = entity.country,
+                    previewUrl = entity.previewUrl
+                )
+            }
+    }
+
+    override suspend fun deleteTrackFromPlaylist(trackId: Long, playlistId: Long): Boolean {
+        val playlist = getPlaylistById(playlistId) ?: return false
+
+        if (!playlist.trackIds.contains(trackId)) {
+            return false
+        }
+
+        val updatedTrackIds = playlist.trackIds.toMutableList()
+        updatedTrackIds.remove(trackId)
+
+        val updatedPlaylist = playlist.copy(
+            trackIds = updatedTrackIds,
+            trackCount = updatedTrackIds.size
+        )
+
+        updatePlaylist(updatedPlaylist)
+
+        cleanupOrphanTracks()
+        return true
+    }
+
+    override suspend fun cleanupOrphanTracks() {
+        val allPlaylists = playlistDao.getAllPlaylists().first()
+        val allTrackIdsInPlaylists = allPlaylists.flatMap { entity ->
+            val type = object : TypeToken<List<Long>>() {}.type
+            val trackIds: List<Long> = gson.fromJson(entity.trackIds, type) ?: emptyList()
+            trackIds
+        }.toSet()
+
+        val allTracks = playlistTrackDao.getAllTracks().first()
+        val orphanTracks = allTracks.filter { !allTrackIdsInPlaylists.contains(it.trackId) }
+
+        orphanTracks.forEach { track ->
+            playlistTrackDao.delete(track)
+        }
     }
 
     private fun mapToEntity(playlist: Playlist): PlaylistEntity {
@@ -110,5 +176,10 @@ class PlaylistRepositoryImpl(
             trackIds = trackIds,
             trackCount = entity.trackCount
         )
+    }
+
+    private fun parseTrackIds(json: String): List<Long> {
+        val type = object : TypeToken<List<Long>>() {}.type
+        return gson.fromJson(json, type) ?: emptyList()
     }
 }

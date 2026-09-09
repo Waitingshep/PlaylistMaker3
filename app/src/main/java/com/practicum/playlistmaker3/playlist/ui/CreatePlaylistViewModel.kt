@@ -17,15 +17,19 @@ data class CreatePlaylistState(
     val isCreateEnabled: Boolean = false,
     val creationResult: Long? = null,
     val showDiscardDialog: Boolean = false,
-    val isDataChanged: Boolean = false
+    val isDataChanged: Boolean = false,
+    val playlistId: Long? = null,
+    val isEditMode: Boolean = false
 )
 
-class CreatePlaylistViewModel(
+open class CreatePlaylistViewModel(
     private val createPlaylistUseCase: CreatePlaylistUseCase
 ) : ViewModel() {
 
-    private val _state = MutableLiveData(CreatePlaylistState())
+    protected val _state = MutableLiveData(CreatePlaylistState())
     val state: LiveData<CreatePlaylistState> = _state
+
+    protected val coroutineScope = viewModelScope
 
     fun updateName(name: String) {
         _state.value = _state.value?.copy(
@@ -53,13 +57,30 @@ class CreatePlaylistViewModel(
         _state.value = _state.value?.copy(coverPath = path)
     }
 
-    fun createPlaylist() {
+    fun setPlaylistId(id: Long) {
+        _state.value = _state.value?.copy(playlistId = id)
+    }
+
+    open fun initPlaylistData(playlistId: Long, name: String, description: String?, coverPath: String?) {
+        _state.value = _state.value?.copy(
+            playlistId = playlistId,
+            name = name,
+            description = description ?: "",
+            coverPath = coverPath,
+            isCreateEnabled = name.isNotBlank(),
+            isDataChanged = false,
+            isEditMode = playlistId > 0
+        )
+    }
+
+    open fun createPlaylist() {
         val currentState = _state.value ?: return
         val name = currentState.name
         if (name.isBlank()) return
 
-        viewModelScope.launch {
+        coroutineScope.launch {
             val playlist = Playlist(
+                id = currentState.playlistId ?: 0,
                 name = name,
                 description = currentState.description,
                 coverPath = currentState.coverPath
@@ -72,7 +93,7 @@ class CreatePlaylistViewModel(
         }
     }
 
-    fun onBackPressed(): Boolean {
+    open fun onBackPressed(): Boolean {
         val currentState = _state.value ?: return false
         return if (currentState.isDataChanged) {
             _state.value = currentState.copy(showDiscardDialog = true)
