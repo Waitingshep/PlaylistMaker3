@@ -9,26 +9,30 @@ import androidx.navigation.ui.setupWithNavController
 import com.practicum.playlistmaker3.R
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var bottomNavContainer: View
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        bottomNavContainer = findViewById(R.id.bottomNavigationContainer)
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         val bottomNav = findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)
         bottomNav.setupWithNavController(navController)
 
-        val bottomNavContainer = findViewById<View>(R.id.bottomNavigationContainer)
-
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.playerFragment,
                 R.id.createPlaylistFragment,
-                R.id.playlistFragment -> {
-                    bottomNavContainer.isVisible = false
+                R.id.playlistFragment,
+                R.id.editPlaylistFragment -> {
+                    bottomNavContainer.visibility = View.GONE
                 }
                 else -> {
-                    bottomNavContainer.isVisible = true
+                    bottomNavContainer.visibility = View.VISIBLE
                 }
             }
         }

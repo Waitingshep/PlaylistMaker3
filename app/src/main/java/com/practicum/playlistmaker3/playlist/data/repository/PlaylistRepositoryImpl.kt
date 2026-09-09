@@ -29,11 +29,8 @@ class PlaylistRepositoryImpl(
         playlistDao.update(entity)
     }
 
-    override suspend fun deletePlaylist(playlist: Playlist) {
-        val entity = playlistDao.getPlaylistById(playlist.id)
-        entity?.let {
-            playlistDao.delete(it)
-        }
+    override suspend fun deletePlaylist(playlistId: Long) {
+        playlistDao.deleteById(playlistId)
         cleanupOrphanTracks()
     }
 
@@ -119,7 +116,9 @@ class PlaylistRepositoryImpl(
             }
     }
 
-    override suspend fun deleteTrackFromPlaylist(trackId: Long, playlist: Playlist): Boolean {
+    override suspend fun deleteTrackFromPlaylist(trackId: Long, playlistId: Long): Boolean {
+        val playlist = getPlaylistById(playlistId) ?: return false
+
         if (!playlist.trackIds.contains(trackId)) {
             return false
         }

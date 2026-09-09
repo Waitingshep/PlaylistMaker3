@@ -11,7 +11,16 @@ import com.practicum.playlistmaker3.playlist.domain.usecase.GetPlaylistByIdUseCa
 import com.practicum.playlistmaker3.playlist.domain.usecase.GetPlaylistTracksUseCase
 import com.practicum.playlistmaker3.playlist.domain.usecase.SharePlaylistUseCase
 import com.practicum.playlistmaker3.search.domain.models.Track
+import com.practicum.playlistmaker3.utils.SingleLiveEvent
 import kotlinx.coroutines.launch
+
+sealed class PlaylistEvent {
+    data class SharePlaylist(val text: String) : PlaylistEvent()
+    object ShowEmptyShareToast : PlaylistEvent()
+    object ShowDeleteConfirmation : PlaylistEvent()
+    object PlaylistDeleted : PlaylistEvent()
+    object NavigateBack : PlaylistEvent()
+}
 
 class PlaylistViewModel(
     private val getPlaylistByIdUseCase: GetPlaylistByIdUseCase,
@@ -23,20 +32,8 @@ class PlaylistViewModel(
     private val _state = MutableLiveData<PlaylistState>()
     val state: LiveData<PlaylistState> = _state
 
-    private val _shareText = MutableLiveData<String?>()
-    val shareText: LiveData<String?> = _shareText
-
-    private val _showShareDialog = MutableLiveData<Boolean>(false)
-    val showShareDialog: LiveData<Boolean> = _showShareDialog
-
-    private val _showDeleteConfirmation = MutableLiveData<Boolean>(false)
-    val showDeleteConfirmation: LiveData<Boolean> = _showDeleteConfirmation
-
-    private val _playlistDeleted = MutableLiveData<Boolean>(false)
-    val playlistDeleted: LiveData<Boolean> = _playlistDeleted
-
-    private val _showEmptyShareToast = MutableLiveData<Boolean>(false)
-    val showEmptyShareToast: LiveData<Boolean> = _showEmptyShareToast
+    private val _event = SingleLiveEvent<PlaylistEvent>()
+    val event: LiveData<PlaylistEvent> = _event
 
     private var currentPlaylist: Playlist? = null
     private var currentTracks: List<Track> = emptyList()
@@ -68,44 +65,42 @@ class PlaylistViewModel(
     fun onShareClick() {
         val tracks = currentTracks
         if (tracks.isEmpty()) {
-            _showEmptyShareToast.value = true
+            _event.value = PlaylistEvent.ShowEmptyShareToast
         } else {
-            _showShareDialog.value = true
+            sharePlaylist()
         }
     }
 
-    fun sharePlaylist() {
+    private fun sharePlaylist() {
         val playlist = currentPlaylist ?: return
         val tracks = currentTracks
         if (tracks.isEmpty()) return
 
         val shareUseCase = SharePlaylistUseCase()
         val text = shareUseCase(playlist, tracks)
-        _shareText.value = text
-        _showShareDialog.value = false
+        _event.value = PlaylistEvent.SharePlaylist(text)
     }
 
     fun deletePlaylist() {
-        _showDeleteConfirmation.value = true
+        _event.value = PlaylistEvent.ShowDeleteConfirmation
     }
 
     fun confirmDeletePlaylist() {
         viewModelScope.launch {
             val playlist = currentPlaylist ?: return@launch
-            deletePlaylistUseCase(playlist)
-            _playlistDeleted.value = true
-            _showDeleteConfirmation.value = false
+            deletePlaylistUseCase(playlist.id)
+            _event.value = PlaylistEvent.PlaylistDeleted
         }
     }
 
     fun cancelDeletePlaylist() {
-        _showDeleteConfirmation.value = false
+        // Обработка отмены - ничего не делаем
     }
 
     fun deleteTrackFromPlaylist(trackId: Long) {
         viewModelScope.launch {
             val playlist = currentPlaylist ?: return@launch
-            val success = deleteTrackFromPlaylistUseCase(trackId, playlist)
+            val success = deleteTrackFromPlaylistUseCase(trackId, playlist.id)
             if (success) {
                 val updatedPlaylist = getPlaylistByIdUseCase(playlist.id)
                 if (updatedPlaylist != null) {
@@ -121,21 +116,5 @@ class PlaylistViewModel(
                 }
             }
         }
-    }
-
-    fun resetShareDialog() {
-        _showShareDialog.value = false
-    }
-
-    fun resetEmptyShareToast() {
-        _showEmptyShareToast.value = false
-    }
-
-    fun resetPlaylistDeleted() {
-        _playlistDeleted.value = false
-    }
-
-    fun navigateToPlayer(track: Track) {
-
     }
 }

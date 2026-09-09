@@ -12,6 +12,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.practicum.playlistmaker3.R
+import com.practicum.playlistmaker3.utils.NavigationVisibilityListener
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class EditPlaylistFragment : CreatePlaylistFragment() {
@@ -35,6 +36,8 @@ class EditPlaylistFragment : CreatePlaylistFragment() {
         editViewModel.initPlaylistData(playlistId, playlistName, playlistDescription, playlistCoverPath)
 
         super.onViewCreated(view, savedInstanceState)
+
+        (requireActivity() as? NavigationVisibilityListener)?.hideNavigation()
 
         val titleTextView = view.findViewById<TextView>(R.id.titleTextView)
         titleTextView.text = getString(R.string.edit_playlist_title)
@@ -71,6 +74,11 @@ class EditPlaylistFragment : CreatePlaylistFragment() {
 
     override fun handleBackPress() {
         findNavController().popBackStack()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        (requireActivity() as? NavigationVisibilityListener)?.showNavigation()
     }
 
     private fun dpToPx(dp: Int): Int = (dp * resources.displayMetrics.density).toInt()

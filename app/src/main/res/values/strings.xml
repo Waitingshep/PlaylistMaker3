@@ -79,4 +79,8 @@
     <string name="edit_playlist_title">Редактировать</string>
     <string name="save">Сохранить</string>
     <string name="playlist_updated">Плейлист \"%s\" обновлён</string>
+    <!-- Диалоги удаления -->
+    <string name="delete_track_confirmation">Хотите удалить трек?</string>
+    <string name="yes">ДА</string>
+    <string name="no">НЕТ</string>
 </resources>

@@ -52,8 +52,9 @@ class PlaylistFragment : Fragment() {
 
     private lateinit var trackAdapter: TrackAdapter
     private var currentTracks: List<TrackUi> = emptyList()
-    private var isPeekHeightSet = false
     private var currentCoverPath: String? = null
+    private var isPeekHeightSet = false
+    private var isMenuHeightPrepared = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_playlist, container, false)
@@ -95,36 +96,14 @@ class PlaylistFragment : Fragment() {
             viewModel.loadPlaylist(playlistId)
         }
 
-        hideBottomNavigation()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        hideBottomNavigation()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        showBottomNavigation()
-    }
-
-    private fun hideBottomNavigation() {
-        val bottomNav = requireActivity().findViewById<View>(R.id.bottomNavigationView)
-        val divider = requireActivity().findViewById<View>(R.id.divider)
-        bottomNav?.visibility = View.GONE
-        divider?.visibility = View.GONE
-    }
-
-    private fun showBottomNavigation() {
-        val bottomNav = requireActivity().findViewById<View>(R.id.bottomNavigationView)
-        val divider = requireActivity().findViewById<View>(R.id.divider)
-        bottomNav?.visibility = View.VISIBLE
-        divider?.visibility = View.VISIBLE
+        view?.post {
+            prepareMenuHeight()
+        }
     }
 
     private fun setupBottomSheet() {
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetContainer).apply {
-            state = BottomSheetBehavior.STATE_HIDDEN
+            state = BottomSheetBehavior.STATE_COLLAPSED
             isHideable = false
             isDraggable = true
             peekHeight = 200
@@ -138,14 +117,21 @@ class PlaylistFragment : Fragment() {
                     BottomSheetBehavior.STATE_HIDDEN -> {
                         overlay.visibility = View.GONE
                         overlay.alpha = 0f
+                        isPeekHeightSet = false
                     }
-                    BottomSheetBehavior.STATE_COLLAPSED, BottomSheetBehavior.STATE_EXPANDED -> {
+                    BottomSheetBehavior.STATE_COLLAPSED -> {
                         overlay.visibility = View.VISIBLE
                         overlay.alpha = 1f
                         if (!isPeekHeightSet) {
-                            calculateAndSetPeekHeight()
-                            isPeekHeightSet = true
+                            view?.post {
+                                calculateAndSetPeekHeight()
+                                isPeekHeightSet = true
+                            }
                         }
+                    }
+                    BottomSheetBehavior.STATE_EXPANDED -> {
+                        overlay.visibility = View.VISIBLE
+                        overlay.alpha = 1f
                     }
                 }
             }
@@ -165,15 +151,41 @@ class PlaylistFragment : Fragment() {
     private fun calculateAndSetPeekHeight() {
         if (!isAdded) return
 
-        val location = IntArray(2)
-        buttonsLayout.getLocationOnScreen(location)
-        val buttonsBottomY = location[1] + buttonsLayout.height
+        val shareLocation = IntArray(2)
+        shareButton.getLocationOnScreen(shareLocation)
+        val shareBottomY = shareLocation[1] + shareButton.height
 
         val screenHeight = resources.displayMetrics.heightPixels
-        val spaceBelowButtons = screenHeight - buttonsBottomY
-        val targetPeekHeight = spaceBelowButtons - dpToPx(24)
+        val spaceBelowShare = screenHeight - shareBottomY
 
-        bottomSheetBehavior.peekHeight = targetPeekHeight.coerceAtLeast(dpToPx(100))
+        var targetHeight = spaceBelowShare - dpToPx(24)
+        val internalPadding = dpToPx(36)
+        targetHeight = targetHeight + internalPadding
+
+        val finalHeight = targetHeight.coerceAtLeast(dpToPx(150))
+        bottomSheetBehavior.peekHeight = finalHeight
+    }
+
+    private fun prepareMenuHeight() {
+        if (!isAdded) return
+
+        val titleLocation = IntArray(2)
+        playlistNameTextView.getLocationOnScreen(titleLocation)
+        val titleBottomY = titleLocation[1] + playlistNameTextView.height
+
+        val screenHeight = resources.displayMetrics.heightPixels
+        val spaceBelowTitle = screenHeight - titleBottomY
+        val menuTopPadding = dpToPx(4 + 12 + 8)
+        val targetHeight = spaceBelowTitle + menuTopPadding
+        val finalHeight = targetHeight.coerceAtLeast(dpToPx(200))
+
+        val params = menuBottomSheetContainer.layoutParams
+        params.height = finalHeight
+        menuBottomSheetContainer.layoutParams = params
+        menuBottomSheetContainer.requestLayout()
+
+        menuBottomSheetBehavior.peekHeight = finalHeight
+        isMenuHeightPrepared = true
     }
 
     private fun setupMenuBottomSheet() {
@@ -192,10 +204,16 @@ class PlaylistFragment : Fragment() {
                     BottomSheetBehavior.STATE_HIDDEN -> {
                         menuOverlay.visibility = View.GONE
                         menuOverlay.alpha = 0f
+                        isMenuHeightPrepared = false
                     }
                     BottomSheetBehavior.STATE_COLLAPSED, BottomSheetBehavior.STATE_EXPANDED -> {
                         menuOverlay.visibility = View.VISIBLE
                         menuOverlay.alpha = 1f
+                        if (!isMenuHeightPrepared) {
+                            view?.post {
+                                prepareMenuHeight()
+                            }
+                        }
                     }
                 }
             }
@@ -230,11 +248,11 @@ class PlaylistFragment : Fragment() {
 
     private fun showDeleteConfirmationDialog(trackUi: TrackUi) {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Хотите удалить трек?")
-            .setPositiveButton("ДА") { _, _ ->
+            .setTitle(getString(R.string.delete_track_confirmation))
+            .setPositiveButton(getString(R.string.yes)) { _, _ ->
                 viewModel.deleteTrackFromPlaylist(trackUi.trackId)
             }
-            .setNegativeButton("НЕТ") { dialog, _ ->
+            .setNegativeButton(getString(R.string.no)) { dialog, _ ->
                 dialog.dismiss()
             }
             .show()
@@ -251,6 +269,9 @@ class PlaylistFragment : Fragment() {
 
         menuButton.setOnClickListener {
             if (menuBottomSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN) {
+                if (!isMenuHeightPrepared) {
+                    prepareMenuHeight()
+                }
                 menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
             } else {
                 menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
@@ -293,55 +314,38 @@ class PlaylistFragment : Fragment() {
     private fun observeViewModel() {
         viewModel.state.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is PlaylistState.Loading -> {
-
-                }
+                is PlaylistState.Loading -> {}
                 is PlaylistState.Content -> {
                     displayPlaylist(state)
                     updateMenuInfo(state)
                     currentCoverPath = state.playlist.coverPath
                 }
-                is PlaylistState.Error -> {
+                is PlaylistState.Error -> {}
+            }
+        }
 
+        viewModel.event.observe(viewLifecycleOwner) { event ->
+            when (event) {
+                is PlaylistEvent.SharePlaylist -> {
+                    val sendIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, event.text)
+                        type = "text/plain"
+                    }
+                    startActivity(Intent.createChooser(sendIntent, getString(R.string.share_via)))
                 }
-            }
-        }
-
-        viewModel.showShareDialog.observe(viewLifecycleOwner) { show ->
-            if (show) {
-                viewModel.sharePlaylist()
-            }
-        }
-
-        viewModel.showEmptyShareToast.observe(viewLifecycleOwner) { show ->
-            if (show) {
-                Toast.makeText(requireContext(), getString(R.string.no_tracks_to_share), Toast.LENGTH_SHORT).show()
-                viewModel.resetEmptyShareToast()
-            }
-        }
-
-        viewModel.shareText.observe(viewLifecycleOwner) { text ->
-            if (!text.isNullOrEmpty()) {
-                val sendIntent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_TEXT, text)
-                    type = "text/plain"
+                is PlaylistEvent.ShowEmptyShareToast -> {
+                    Toast.makeText(requireContext(), getString(R.string.no_tracks_to_share), Toast.LENGTH_SHORT).show()
                 }
-                startActivity(Intent.createChooser(sendIntent, "Поделиться"))
-                viewModel.resetShareDialog()
-            }
-        }
-
-        viewModel.showDeleteConfirmation.observe(viewLifecycleOwner) { show ->
-            if (show) {
-                showDeletePlaylistDialog()
-            }
-        }
-
-        viewModel.playlistDeleted.observe(viewLifecycleOwner) { deleted ->
-            if (deleted) {
-                findNavController().popBackStack()
-                viewModel.resetPlaylistDeleted()
+                is PlaylistEvent.ShowDeleteConfirmation -> {
+                    showDeletePlaylistDialog()
+                }
+                is PlaylistEvent.PlaylistDeleted -> {
+                    findNavController().popBackStack()
+                }
+                is PlaylistEvent.NavigateBack -> {
+                    findNavController().popBackStack()
+                }
             }
         }
     }
@@ -371,12 +375,12 @@ class PlaylistFragment : Fragment() {
 
     private fun showDeletePlaylistDialog() {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Удалить плейлист")
-            .setMessage("Хотите удалить плейлист?")
-            .setPositiveButton("Да") { _, _ ->
+            .setTitle(getString(R.string.delete_playlist_title))
+            .setMessage(getString(R.string.delete_playlist_message))
+            .setPositiveButton(getString(R.string.delete_playlist_yes)) { _, _ ->
                 viewModel.confirmDeletePlaylist()
             }
-            .setNegativeButton("Нет") { dialog, _ ->
+            .setNegativeButton(getString(R.string.delete_playlist_no)) { dialog, _ ->
                 dialog.dismiss()
                 viewModel.cancelDeletePlaylist()
             }
@@ -446,26 +450,22 @@ class PlaylistFragment : Fragment() {
         if (state.tracks.isEmpty()) {
             emptyTracksLayout.isVisible = true
             tracksRecyclerView.isVisible = false
-            overlay.visibility = View.VISIBLE
-            overlay.alpha = 1f
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            isPeekHeightSet = false
         } else {
             emptyTracksLayout.isVisible = false
             tracksRecyclerView.isVisible = true
-            isPeekHeightSet = false
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            overlay.visibility = View.VISIBLE
-            overlay.alpha = 1f
+        }
+
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        overlay.visibility = View.VISIBLE
+        overlay.alpha = 1f
+
+        view?.post {
+            calculateAndSetPeekHeight()
+            isPeekHeightSet = true
         }
     }
 
     private fun dpToPx(dp: Int): Int = (dp * resources.displayMetrics.density).toInt()
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        showBottomNavigation()
-    }
 
     companion object {
         fun newInstance(playlistId: Long): PlaylistFragment {
