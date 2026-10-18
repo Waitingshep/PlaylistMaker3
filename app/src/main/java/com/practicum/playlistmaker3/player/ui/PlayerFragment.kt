@@ -41,7 +41,7 @@ class PlayerFragment : Fragment() {
     private lateinit var countryLayout: ConstraintLayout
     private lateinit var countryValueTextView: TextView
     private lateinit var currentTimeTextView: TextView
-    private lateinit var playButton: PlaybackButtonView
+    private lateinit var playButton: ImageButton
     private lateinit var favoriteButton: ImageButton
     private lateinit var addToPlaylistButton: ImageButton
 
@@ -93,7 +93,7 @@ class PlayerFragment : Fragment() {
     }
 
     private fun setupPlayButton() {
-        playButton.onPlaybackClickListener = {
+        playButton.setOnClickListener {
             val state = viewModel.state.value
             when (state) {
                 is PlayerState.Playing -> viewModel.pause()
@@ -186,19 +186,19 @@ class PlayerFragment : Fragment() {
             when (state) {
                 is PlayerState.Content -> {
                     displayTrackInfo(state.track)
-                    playButton.setPlaying(false)  // синхронизация: играет = false
+                    playButton.setImageResource(R.drawable.ic_play_button_100)
                     currentTimeTextView.text = getString(R.string.default_track_time)
                     updateFavoriteButton(state.isFavorite)
                 }
                 is PlayerState.Playing -> {
                     displayTrackInfo(state.track)
-                    playButton.setPlaying(true)   // синхронизация: играет = true
+                    playButton.setImageResource(R.drawable.ic_pause_button_100)
                     currentTimeTextView.text = formatTime(state.currentPosition)
                     updateFavoriteButton(state.isFavorite)
                 }
                 is PlayerState.Paused -> {
                     displayTrackInfo(state.track)
-                    playButton.setPlaying(false)  // синхронизация: играет = false
+                    playButton.setImageResource(R.drawable.ic_play_button_100)
                     currentTimeTextView.text = formatTime(state.currentPosition)
                     updateFavoriteButton(state.isFavorite)
                 }

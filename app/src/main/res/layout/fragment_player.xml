@@ -111,14 +111,14 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
 
-                <!-- Кнопка Play / Pause -->
-                <com.practicum.playlistmaker3.player.ui.PlaybackButtonView
+                <!-- Кнопка Play -->
+                <ImageButton
                     android:id="@+id/playButton"
                     android:layout_width="84dp"
                     android:layout_height="84dp"
                     android:background="@drawable/round_button"
-                    app:playIcon="@drawable/ic_play_button_100"
-                    app:pauseIcon="@drawable/ic_pause_button_100"
+                    android:src="@drawable/ic_play_button_100"
+                    android:padding="20dp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
