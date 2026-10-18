@@ -1,6 +1,7 @@
 package com.practicum.playlistmaker3.playlist.data.db
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -15,6 +16,12 @@ interface PlaylistDao {
 
     @Update
     suspend fun update(playlist: PlaylistEntity)
+
+    @Delete
+    suspend fun delete(playlist: PlaylistEntity)
+
+    @Query("DELETE FROM playlists WHERE id = :playlistId")
+    suspend fun deleteById(playlistId: Long)
 
     @Query("SELECT * FROM playlists ORDER BY id DESC")
     fun getAllPlaylists(): Flow<List<PlaylistEntity>>

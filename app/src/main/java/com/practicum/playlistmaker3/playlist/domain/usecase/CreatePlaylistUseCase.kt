@@ -7,6 +7,11 @@ class CreatePlaylistUseCase(
     private val repository: PlaylistRepository
 ) {
     suspend operator fun invoke(playlist: Playlist): Long {
-        return repository.createPlaylist(playlist)
+        return if (playlist.id > 0) {
+            repository.updatePlaylist(playlist)
+            playlist.id
+        } else {
+            repository.createPlaylist(playlist)
+        }
     }
 }

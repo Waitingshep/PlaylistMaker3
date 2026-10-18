@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.practicum.playlistmaker3.R
@@ -55,7 +56,10 @@ class PlaylistsFragment : Fragment() {
         recyclerView.layoutManager = layoutManager
 
         adapter = PlaylistAdapter(emptyList()) { playlist ->
-            // TODO: переход на экран плейлиста
+            val bundle = Bundle().apply {
+                putLong("playlistId", playlist.id)
+            }
+            findNavController().navigate(R.id.action_mediaFragment_to_playlistFragment, bundle)
         }
         recyclerView.adapter = adapter
     }

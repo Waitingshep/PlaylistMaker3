@@ -15,5 +15,6 @@ data class PlaylistTrackEntity(
     val releaseDate: String? = null,
     val primaryGenreName: String? = null,
     val country: String? = null,
-    val previewUrl: String? = null
+    val previewUrl: String? = null,
+    val timestamp: Long = System.currentTimeMillis()
 )
