@@ -55,6 +55,7 @@ class PlayerViewModel(
     private var currentPosition: Int = 0
     private var isFavorite: Boolean = false
     private var pendingPlay: Boolean = false
+    private var isCompleted: Boolean = false
 
     fun loadTrack(trackUi: TrackUi) {
         viewModelScope.launch {
@@ -64,6 +65,7 @@ class PlayerViewModel(
             isPrepared = false
             currentPosition = 0
             pendingPlay = false
+            isCompleted = false
 
             val favoriteIds = favoriteRepository.getFavoriteIds()
             isFavorite = favoriteIds.contains(track.trackId)
@@ -75,6 +77,7 @@ class PlayerViewModel(
             playTrackUseCase.prepare(track,
                 onPrepared = {
                     isPrepared = true
+                    isCompleted = false
                     Log.d(TAG, "onPrepared: трек подготовлен, pendingPlay = $pendingPlay")
                     if (pendingPlay) {
                         pendingPlay = false
@@ -87,10 +90,10 @@ class PlayerViewModel(
                     Log.d(TAG, "onCompletion: трек завершён")
                     stopUpdating()
                     isPrepared = false
+                    isCompleted = true
                     currentPosition = 0
                     pendingPlay = false
                     _state.value = PlayerState.Content(track, isFavorite)
-                    playTrackUseCase.stop()
                 }
             )
         }
@@ -160,8 +163,16 @@ class PlayerViewModel(
     fun play() {
         currentTrack?.let { track ->
             if (!isPrepared) {
-                Log.d(TAG, "play(): трек не подготовлен, pendingPlay = true")
-                pendingPlay = true
+                if (isCompleted) {
+                    // Трек завершён — нужно переподготовить
+                    Log.d(TAG, "play(): трек завершён, переподготавливаем")
+                    pendingPlay = true
+                    prepareAndPlay(track)
+                } else {
+                    // Трек ещё готовится
+                    Log.d(TAG, "play(): трек не подготовлен, pendingPlay = true")
+                    pendingPlay = true
+                }
                 return
             }
             Log.d(TAG, "play(): запускаем воспроизведение")
@@ -169,6 +180,30 @@ class PlayerViewModel(
             startUpdating()
             _state.value = PlayerState.Playing(track, playTrackUseCase.getCurrentPosition(), isFavorite)
         }
+    }
+
+    private fun prepareAndPlay(track: Track) {
+        playTrackUseCase.release()
+        playTrackUseCase.prepare(track,
+            onPrepared = {
+                isPrepared = true
+                isCompleted = false
+                Log.d(TAG, "prepareAndPlay onPrepared: pendingPlay = $pendingPlay")
+                if (pendingPlay) {
+                    pendingPlay = false
+                    play()
+                }
+            },
+            onCompletion = {
+                Log.d(TAG, "prepareAndPlay onCompletion")
+                stopUpdating()
+                isPrepared = false
+                isCompleted = true
+                currentPosition = 0
+                pendingPlay = false
+                _state.value = PlayerState.Content(track, isFavorite)
+            }
+        )
     }
 
     fun pause() {
@@ -186,6 +221,7 @@ class PlayerViewModel(
     fun stop() {
         Log.d(TAG, "stop(): останавливаем")
         pendingPlay = false
+        isCompleted = false
         playTrackUseCase.stop()
         stopUpdating()
         isPrepared = false
@@ -207,8 +243,10 @@ class PlayerViewModel(
                         _state.value = PlayerState.Playing(track, position, isFavorite)
                     } else {
                         stopUpdating()
-                        _state.value = PlayerState.Content(track, isFavorite)
-                        playTrackUseCase.stop()
+                        if (!playTrackUseCase.isPlaying()) {
+                            _state.value = PlayerState.Content(track, isFavorite)
+                            playTrackUseCase.stop()
+                        }
                     }
                 }
             }
