@@ -8,7 +8,6 @@ import android.graphics.RectF
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat
@@ -21,7 +20,6 @@ class PlaybackButtonView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     companion object {
-        private const val TAG = "PlaybackDebug"
         private const val STATE_PLAY = 0
         private const val STATE_PAUSE = 1
         private const val DEBOUNCE_DELAY = 300L
@@ -40,7 +38,6 @@ class PlaybackButtonView @JvmOverloads constructor(
     var onPlaybackClickListener: (() -> Unit)? = null
 
     init {
-        Log.d(TAG, "PlaybackButtonView init")
         if (attrs != null) {
             val typedArray = context.obtainStyledAttributes(attrs, R.styleable.PlaybackButtonView)
             try {
@@ -49,11 +46,9 @@ class PlaybackButtonView @JvmOverloads constructor(
 
                 if (playResId != 0) {
                     playBitmap = getBitmapFromDrawable(playResId)
-                    Log.d(TAG, "playBitmap загружен")
                 }
                 if (pauseResId != 0) {
                     pauseBitmap = getBitmapFromDrawable(pauseResId)
-                    Log.d(TAG, "pauseBitmap загружен")
                 }
             } finally {
                 typedArray.recycle()
@@ -77,7 +72,6 @@ class PlaybackButtonView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         imageRect.set(0f, 0f, w.toFloat(), h.toFloat())
-        Log.d(TAG, "onSizeChanged: $w x $h, imageRect = $imageRect")
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -89,27 +83,17 @@ class PlaybackButtonView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        Log.d(TAG, "onTouchEvent: action = ${event.action}, currentState = $currentState, isClickEnabled = $isClickEnabled")
         when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                Log.d(TAG, "ACTION_DOWN")
-                return true
-            }
+            MotionEvent.ACTION_DOWN -> return true
             MotionEvent.ACTION_UP -> {
-                if (!isClickEnabled) {
-                    Log.d(TAG, "ACTION_UP: клик заблокирован (debounce)")
-                    return true
-                }
+                if (!isClickEnabled) return true
                 isClickEnabled = false
                 handler.postDelayed({ isClickEnabled = true }, DEBOUNCE_DELAY)
 
                 currentState = if (currentState == STATE_PLAY) STATE_PAUSE else STATE_PLAY
-                Log.d(TAG, "ACTION_UP: переключаем состояние на $currentState")
                 invalidate()
 
-                Log.d(TAG, "ACTION_UP: вызываем onPlaybackClickListener")
                 onPlaybackClickListener?.invoke()
-                Log.d(TAG, "ACTION_UP: onPlaybackClickListener вызван")
                 return true
             }
         }
@@ -118,13 +102,9 @@ class PlaybackButtonView @JvmOverloads constructor(
 
     fun setPlaying(isPlaying: Boolean) {
         val newState = if (isPlaying) STATE_PAUSE else STATE_PLAY
-        Log.d(TAG, "setPlaying($isPlaying) -> newState = $newState, currentState = $currentState")
         if (currentState != newState) {
             currentState = newState
             invalidate()
-            Log.d(TAG, "setPlaying: состояние изменено на $currentState")
-        } else {
-            Log.d(TAG, "setPlaying: состояние не изменилось (уже $currentState)")
         }
     }
 }

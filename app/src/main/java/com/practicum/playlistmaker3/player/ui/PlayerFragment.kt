@@ -1,7 +1,14 @@
 package com.practicum.playlistmaker3.player.ui
 
+import android.Manifest
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +16,9 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,16 +28,13 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.practicum.playlistmaker3.R
+import com.practicum.playlistmaker3.player.service.PlayerService
 import com.practicum.playlistmaker3.playlist.ui.PlaylistBottomSheetAdapter
 import com.practicum.playlistmaker3.search.domain.models.Track
 import com.practicum.playlistmaker3.search.ui.TrackUi
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class PlayerFragment : Fragment() {
-
-    companion object {
-        private const val TAG = "PlaybackDebug"
-    }
 
     private val viewModel: PlayerViewModel by viewModel()
 
@@ -57,6 +63,24 @@ class PlayerFragment : Fragment() {
     private lateinit var bottomSheetAdapter: PlaylistBottomSheetAdapter
 
     private var previousState: PlayerState? = null
+    private var isBound = false
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as PlayerService.PlayerBinder
+            val controller = binder.getService()
+            viewModel.onServiceConnected(controller)
+            isBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            isBound = false
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_player, container, false)
@@ -64,7 +88,6 @@ class PlayerFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d(TAG, "=== onViewCreated ===")
 
         backButton = view.findViewById(R.id.backButton)
         coverImageView = view.findViewById(R.id.coverImageView)
@@ -91,6 +114,38 @@ class PlayerFragment : Fragment() {
         setupBottomSheet()
         observeViewModel()
         loadTrack()
+        requestNotificationPermission()
+        bindPlayerService()
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun bindPlayerService() {
+        val args = arguments?.getParcelable<TrackUi>("track") ?: return
+        val intent = Intent(requireContext(), PlayerService::class.java).apply {
+            putExtra("trackId", args.trackId)
+            putExtra("trackName", args.trackName)
+            putExtra("artistName", args.artistName)
+            putExtra("trackTimeMillis", args.trackTimeMillis)
+            putExtra("artworkUrl100", args.artworkUrl100)
+            putExtra("collectionName", args.collectionName)
+            putExtra("releaseDate", args.releaseDate)
+            putExtra("primaryGenreName", args.primaryGenreName)
+            putExtra("country", args.country)
+            putExtra("previewUrl", args.previewUrl)
+            putExtra("isFavorite", args.isFavorite)
+        }
+        requireContext().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
     private fun setupBackButton() {
@@ -102,24 +157,12 @@ class PlayerFragment : Fragment() {
 
     private fun setupPlayButton() {
         playButton.onPlaybackClickListener = {
-            Log.d(TAG, "onPlaybackClickListener: state = ${viewModel.state.value}")
             val state = viewModel.state.value
             when (state) {
-                is PlayerState.Playing -> {
-                    Log.d(TAG, "onPlaybackClickListener: вызываем pause()")
-                    viewModel.pause()
-                }
-                is PlayerState.Paused -> {
-                    Log.d(TAG, "onPlaybackClickListener: вызываем play()")
-                    viewModel.play()
-                }
-                is PlayerState.Content -> {
-                    Log.d(TAG, "onPlaybackClickListener: вызываем play()")
-                    viewModel.play()
-                }
-                else -> {
-                    Log.d(TAG, "onPlaybackClickListener: неизвестное состояние")
-                }
+                is PlayerState.Playing -> viewModel.pause()
+                is PlayerState.Paused -> viewModel.play()
+                is PlayerState.Content -> viewModel.play()
+                else -> {}
             }
         }
     }
@@ -203,40 +246,28 @@ class PlayerFragment : Fragment() {
 
     private fun observeViewModel() {
         viewModel.state.observe(viewLifecycleOwner) { state ->
-            Log.d(TAG, "observeViewModel: новое состояние = ${state::class.simpleName}, предыдущее = ${previousState?.let { it::class.simpleName }}")
-
             when (state) {
                 is PlayerState.Content -> {
                     displayTrackInfo(state.track)
-                    // Синхронизируем кнопку, только если предыдущее состояние было Playing
-                    // (трек завершился) или если это первая загрузка
                     if (previousState is PlayerState.Playing || previousState == null) {
-                        Log.d(TAG, "observeViewModel: Content -> setPlaying(false) (предыдущее: ${previousState?.let { it::class.simpleName }})")
                         playButton.setPlaying(false)
-                    } else {
-                        Log.d(TAG, "observeViewModel: Content -> НЕ вызываем setPlaying (кнопка уже переключена)")
                     }
                     currentTimeTextView.text = getString(R.string.default_track_time)
                     updateFavoriteButton(state.isFavorite)
                 }
                 is PlayerState.Playing -> {
                     displayTrackInfo(state.track)
-                    Log.d(TAG, "observeViewModel: Playing -> НЕ ВЫЗЫВАЕМ setPlaying")
                     currentTimeTextView.text = formatTime(state.currentPosition)
                     updateFavoriteButton(state.isFavorite)
                 }
                 is PlayerState.Paused -> {
                     displayTrackInfo(state.track)
-                    Log.d(TAG, "observeViewModel: Paused -> setPlaying(false)")
                     playButton.setPlaying(false)
                     currentTimeTextView.text = formatTime(state.currentPosition)
                     updateFavoriteButton(state.isFavorite)
                 }
-                else -> {
-                    Log.d(TAG, "observeViewModel: другое состояние")
-                }
+                else -> {}
             }
-
             previousState = state
         }
 
@@ -270,7 +301,6 @@ class PlayerFragment : Fragment() {
     private fun loadTrack() {
         val args = arguments?.getParcelable<TrackUi>("track")
         if (args != null) {
-            Log.d(TAG, "loadTrack: загружаем трек")
             viewModel.loadTrack(args)
         }
     }
@@ -331,4 +361,22 @@ class PlayerFragment : Fragment() {
     }
 
     private fun dpToPx(dp: Float): Int = (dp * resources.displayMetrics.density).toInt()
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.onUiResumed()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.onUiPaused()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        if (isBound) {
+            requireContext().unbindService(serviceConnection)
+            isBound = false
+        }
+    }
 }

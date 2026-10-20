@@ -10,9 +10,9 @@ class PlayerRepositoryImpl : PlayerRepository {
     override fun prepare(url: String, onPrepared: () -> Unit, onCompletion: () -> Unit) {
         mediaPlayer = MediaPlayer().apply {
             setDataSource(url)
-            prepareAsync()
             setOnPreparedListener { onPrepared() }
             setOnCompletionListener { onCompletion() }
+            prepareAsync()
         }
     }
 
