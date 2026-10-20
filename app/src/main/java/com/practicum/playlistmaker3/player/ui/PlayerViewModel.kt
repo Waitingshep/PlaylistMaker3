@@ -1,5 +1,6 @@
 package com.practicum.playlistmaker3.player.ui
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,7 +17,6 @@ import com.practicum.playlistmaker3.search.ui.TrackMapper
 import com.practicum.playlistmaker3.search.ui.TrackUi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 sealed class PlaylistAddStatus {
@@ -32,6 +32,10 @@ class PlayerViewModel(
     private val getPlaylistsUseCase: GetPlaylistsUseCase,
     private val addTrackToPlaylistUseCase: AddTrackToPlaylistUseCase
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "PlaybackDebug"
+    }
 
     private val _state = MutableLiveData<PlayerState>()
     val state: LiveData<PlayerState> = _state
@@ -50,13 +54,18 @@ class PlayerViewModel(
     private var isPrepared: Boolean = false
     private var currentPosition: Int = 0
     private var isFavorite: Boolean = false
+    private var pendingPlay: Boolean = false
+    private var isCompleted: Boolean = false
 
     fun loadTrack(trackUi: TrackUi) {
         viewModelScope.launch {
+            Log.d(TAG, "loadTrack: начинаем загрузку")
             val track = TrackMapper.mapToDomain(trackUi)
             currentTrack = track
             isPrepared = false
             currentPosition = 0
+            pendingPlay = false
+            isCompleted = false
 
             val favoriteIds = favoriteRepository.getFavoriteIds()
             isFavorite = favoriteIds.contains(track.trackId)
@@ -68,14 +77,23 @@ class PlayerViewModel(
             playTrackUseCase.prepare(track,
                 onPrepared = {
                     isPrepared = true
-                    _state.value = PlayerState.Content(track, isFavorite)
+                    isCompleted = false
+                    Log.d(TAG, "onPrepared: трек подготовлен, pendingPlay = $pendingPlay")
+                    if (pendingPlay) {
+                        pendingPlay = false
+                        play()
+                    } else {
+                        _state.value = PlayerState.Content(track, isFavorite)
+                    }
                 },
                 onCompletion = {
+                    Log.d(TAG, "onCompletion: трек завершён")
                     stopUpdating()
                     isPrepared = false
+                    isCompleted = true
                     currentPosition = 0
+                    pendingPlay = false
                     _state.value = PlayerState.Content(track, isFavorite)
-                    playTrackUseCase.stop()
                 }
             )
         }
@@ -143,16 +161,55 @@ class PlayerViewModel(
     }
 
     fun play() {
-        if (!isPrepared) return
         currentTrack?.let { track ->
+            if (!isPrepared) {
+                if (isCompleted) {
+                    // Трек завершён — нужно переподготовить
+                    Log.d(TAG, "play(): трек завершён, переподготавливаем")
+                    pendingPlay = true
+                    prepareAndPlay(track)
+                } else {
+                    // Трек ещё готовится
+                    Log.d(TAG, "play(): трек не подготовлен, pendingPlay = true")
+                    pendingPlay = true
+                }
+                return
+            }
+            Log.d(TAG, "play(): запускаем воспроизведение")
             playTrackUseCase.play()
             startUpdating()
             _state.value = PlayerState.Playing(track, playTrackUseCase.getCurrentPosition(), isFavorite)
         }
     }
 
+    private fun prepareAndPlay(track: Track) {
+        playTrackUseCase.release()
+        playTrackUseCase.prepare(track,
+            onPrepared = {
+                isPrepared = true
+                isCompleted = false
+                Log.d(TAG, "prepareAndPlay onPrepared: pendingPlay = $pendingPlay")
+                if (pendingPlay) {
+                    pendingPlay = false
+                    play()
+                }
+            },
+            onCompletion = {
+                Log.d(TAG, "prepareAndPlay onCompletion")
+                stopUpdating()
+                isPrepared = false
+                isCompleted = true
+                currentPosition = 0
+                pendingPlay = false
+                _state.value = PlayerState.Content(track, isFavorite)
+            }
+        )
+    }
+
     fun pause() {
         currentTrack?.let { track ->
+            Log.d(TAG, "pause(): приостанавливаем")
+            pendingPlay = false
             playTrackUseCase.pause()
             stopUpdating()
             val position = playTrackUseCase.getCurrentPosition()
@@ -162,6 +219,9 @@ class PlayerViewModel(
     }
 
     fun stop() {
+        Log.d(TAG, "stop(): останавливаем")
+        pendingPlay = false
+        isCompleted = false
         playTrackUseCase.stop()
         stopUpdating()
         isPrepared = false
@@ -183,8 +243,10 @@ class PlayerViewModel(
                         _state.value = PlayerState.Playing(track, position, isFavorite)
                     } else {
                         stopUpdating()
-                        _state.value = PlayerState.Content(track, isFavorite)
-                        playTrackUseCase.stop()
+                        if (!playTrackUseCase.isPlaying()) {
+                            _state.value = PlayerState.Content(track, isFavorite)
+                            playTrackUseCase.stop()
+                        }
                     }
                 }
             }

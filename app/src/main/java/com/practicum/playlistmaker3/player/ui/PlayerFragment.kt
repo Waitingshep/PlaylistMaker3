@@ -1,6 +1,7 @@
 package com.practicum.playlistmaker3.player.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +26,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class PlayerFragment : Fragment() {
 
+    companion object {
+        private const val TAG = "PlaybackDebug"
+    }
+
     private val viewModel: PlayerViewModel by viewModel()
 
     private lateinit var backButton: ImageButton
@@ -41,7 +46,7 @@ class PlayerFragment : Fragment() {
     private lateinit var countryLayout: ConstraintLayout
     private lateinit var countryValueTextView: TextView
     private lateinit var currentTimeTextView: TextView
-    private lateinit var playButton: ImageButton
+    private lateinit var playButton: PlaybackButtonView
     private lateinit var favoriteButton: ImageButton
     private lateinit var addToPlaylistButton: ImageButton
 
@@ -51,12 +56,15 @@ class PlayerFragment : Fragment() {
     private lateinit var createPlaylistButton: View
     private lateinit var bottomSheetAdapter: PlaylistBottomSheetAdapter
 
+    private var previousState: PlayerState? = null
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_player, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d(TAG, "=== onViewCreated ===")
 
         backButton = view.findViewById(R.id.backButton)
         coverImageView = view.findViewById(R.id.coverImageView)
@@ -93,13 +101,25 @@ class PlayerFragment : Fragment() {
     }
 
     private fun setupPlayButton() {
-        playButton.setOnClickListener {
+        playButton.onPlaybackClickListener = {
+            Log.d(TAG, "onPlaybackClickListener: state = ${viewModel.state.value}")
             val state = viewModel.state.value
             when (state) {
-                is PlayerState.Playing -> viewModel.pause()
-                is PlayerState.Paused -> viewModel.play()
-                is PlayerState.Content -> viewModel.play()
-                else -> {}
+                is PlayerState.Playing -> {
+                    Log.d(TAG, "onPlaybackClickListener: вызываем pause()")
+                    viewModel.pause()
+                }
+                is PlayerState.Paused -> {
+                    Log.d(TAG, "onPlaybackClickListener: вызываем play()")
+                    viewModel.play()
+                }
+                is PlayerState.Content -> {
+                    Log.d(TAG, "onPlaybackClickListener: вызываем play()")
+                    viewModel.play()
+                }
+                else -> {
+                    Log.d(TAG, "onPlaybackClickListener: неизвестное состояние")
+                }
             }
         }
     }
@@ -183,27 +203,41 @@ class PlayerFragment : Fragment() {
 
     private fun observeViewModel() {
         viewModel.state.observe(viewLifecycleOwner) { state ->
+            Log.d(TAG, "observeViewModel: новое состояние = ${state::class.simpleName}, предыдущее = ${previousState?.let { it::class.simpleName }}")
+
             when (state) {
                 is PlayerState.Content -> {
                     displayTrackInfo(state.track)
-                    playButton.setImageResource(R.drawable.ic_play_button_100)
+                    // Синхронизируем кнопку, только если предыдущее состояние было Playing
+                    // (трек завершился) или если это первая загрузка
+                    if (previousState is PlayerState.Playing || previousState == null) {
+                        Log.d(TAG, "observeViewModel: Content -> setPlaying(false) (предыдущее: ${previousState?.let { it::class.simpleName }})")
+                        playButton.setPlaying(false)
+                    } else {
+                        Log.d(TAG, "observeViewModel: Content -> НЕ вызываем setPlaying (кнопка уже переключена)")
+                    }
                     currentTimeTextView.text = getString(R.string.default_track_time)
                     updateFavoriteButton(state.isFavorite)
                 }
                 is PlayerState.Playing -> {
                     displayTrackInfo(state.track)
-                    playButton.setImageResource(R.drawable.ic_pause_button_100)
+                    Log.d(TAG, "observeViewModel: Playing -> НЕ ВЫЗЫВАЕМ setPlaying")
                     currentTimeTextView.text = formatTime(state.currentPosition)
                     updateFavoriteButton(state.isFavorite)
                 }
                 is PlayerState.Paused -> {
                     displayTrackInfo(state.track)
-                    playButton.setImageResource(R.drawable.ic_play_button_100)
+                    Log.d(TAG, "observeViewModel: Paused -> setPlaying(false)")
+                    playButton.setPlaying(false)
                     currentTimeTextView.text = formatTime(state.currentPosition)
                     updateFavoriteButton(state.isFavorite)
                 }
-                else -> {}
+                else -> {
+                    Log.d(TAG, "observeViewModel: другое состояние")
+                }
             }
+
+            previousState = state
         }
 
         viewModel.playlists.observe(viewLifecycleOwner) { playlists ->
@@ -236,6 +270,7 @@ class PlayerFragment : Fragment() {
     private fun loadTrack() {
         val args = arguments?.getParcelable<TrackUi>("track")
         if (args != null) {
+            Log.d(TAG, "loadTrack: загружаем трек")
             viewModel.loadTrack(args)
         }
     }
