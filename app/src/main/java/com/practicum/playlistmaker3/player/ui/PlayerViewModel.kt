@@ -1,11 +1,10 @@
 package com.practicum.playlistmaker3.player.ui
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.playlistmaker3.player.domain.usecase.PlayTrackUseCase
+import com.practicum.playlistmaker3.player.service.PlayerController
 import com.practicum.playlistmaker3.playlist.domain.models.Playlist
 import com.practicum.playlistmaker3.playlist.domain.usecase.AddTrackToPlaylistUseCase
 import com.practicum.playlistmaker3.playlist.domain.usecase.GetPlaylistsUseCase
@@ -17,6 +16,7 @@ import com.practicum.playlistmaker3.search.ui.TrackMapper
 import com.practicum.playlistmaker3.search.ui.TrackUi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 sealed class PlaylistAddStatus {
@@ -25,17 +25,12 @@ sealed class PlaylistAddStatus {
 }
 
 class PlayerViewModel(
-    private val playTrackUseCase: PlayTrackUseCase,
     private val addToFavoriteUseCase: AddTrackToFavoriteUseCase,
     private val removeFromFavoriteUseCase: RemoveTrackFromFavoriteUseCase,
     private val favoriteRepository: FavoriteRepository,
     private val getPlaylistsUseCase: GetPlaylistsUseCase,
     private val addTrackToPlaylistUseCase: AddTrackToPlaylistUseCase
 ) : ViewModel() {
-
-    companion object {
-        private const val TAG = "PlaybackDebug"
-    }
 
     private val _state = MutableLiveData<PlayerState>()
     val state: LiveData<PlayerState> = _state
@@ -49,53 +44,40 @@ class PlayerViewModel(
     private val _showPlaylistBottomSheet = MutableLiveData<Boolean>(false)
     val showPlaylistBottomSheet: LiveData<Boolean> = _showPlaylistBottomSheet
 
-    private var updateJob: Job? = null
+    private var playerController: PlayerController? = null
+    private var stateJob: Job? = null
     private var currentTrack: Track? = null
-    private var isPrepared: Boolean = false
-    private var currentPosition: Int = 0
     private var isFavorite: Boolean = false
-    private var pendingPlay: Boolean = false
-    private var isCompleted: Boolean = false
+    private var isUiResumed: Boolean = false
+
+    fun onServiceConnected(controller: PlayerController) {
+        playerController = controller
+        observeServiceState()
+    }
+
+    private fun observeServiceState() {
+        stateJob?.cancel()
+        stateJob = viewModelScope.launch {
+            playerController?.getState()?.collectLatest { state ->
+                state?.let {
+                    _state.value = it
+                    if (it is PlayerState.Playing) {
+                        currentTrack = it.track
+                        isFavorite = it.isFavorite
+                    }
+                }
+            }
+        }
+    }
 
     fun loadTrack(trackUi: TrackUi) {
         viewModelScope.launch {
-            Log.d(TAG, "loadTrack: начинаем загрузку")
             val track = TrackMapper.mapToDomain(trackUi)
             currentTrack = track
-            isPrepared = false
-            currentPosition = 0
-            pendingPlay = false
-            isCompleted = false
-
             val favoriteIds = favoriteRepository.getFavoriteIds()
             isFavorite = favoriteIds.contains(track.trackId)
             track.isFavorite = isFavorite
-
             _state.value = PlayerState.Content(track, isFavorite)
-
-            playTrackUseCase.release()
-            playTrackUseCase.prepare(track,
-                onPrepared = {
-                    isPrepared = true
-                    isCompleted = false
-                    Log.d(TAG, "onPrepared: трек подготовлен, pendingPlay = $pendingPlay")
-                    if (pendingPlay) {
-                        pendingPlay = false
-                        play()
-                    } else {
-                        _state.value = PlayerState.Content(track, isFavorite)
-                    }
-                },
-                onCompletion = {
-                    Log.d(TAG, "onCompletion: трек завершён")
-                    stopUpdating()
-                    isPrepared = false
-                    isCompleted = true
-                    currentPosition = 0
-                    pendingPlay = false
-                    _state.value = PlayerState.Content(track, isFavorite)
-                }
-            )
         }
     }
 
@@ -161,106 +143,37 @@ class PlayerViewModel(
     }
 
     fun play() {
-        currentTrack?.let { track ->
-            if (!isPrepared) {
-                if (isCompleted) {
-                    // Трек завершён — нужно переподготовить
-                    Log.d(TAG, "play(): трек завершён, переподготавливаем")
-                    pendingPlay = true
-                    prepareAndPlay(track)
-                } else {
-                    // Трек ещё готовится
-                    Log.d(TAG, "play(): трек не подготовлен, pendingPlay = true")
-                    pendingPlay = true
-                }
-                return
-            }
-            Log.d(TAG, "play(): запускаем воспроизведение")
-            playTrackUseCase.play()
-            startUpdating()
-            _state.value = PlayerState.Playing(track, playTrackUseCase.getCurrentPosition(), isFavorite)
+        playerController?.play()
+        if (!isUiResumed) {
+            playerController?.showNotification()
         }
-    }
-
-    private fun prepareAndPlay(track: Track) {
-        playTrackUseCase.release()
-        playTrackUseCase.prepare(track,
-            onPrepared = {
-                isPrepared = true
-                isCompleted = false
-                Log.d(TAG, "prepareAndPlay onPrepared: pendingPlay = $pendingPlay")
-                if (pendingPlay) {
-                    pendingPlay = false
-                    play()
-                }
-            },
-            onCompletion = {
-                Log.d(TAG, "prepareAndPlay onCompletion")
-                stopUpdating()
-                isPrepared = false
-                isCompleted = true
-                currentPosition = 0
-                pendingPlay = false
-                _state.value = PlayerState.Content(track, isFavorite)
-            }
-        )
     }
 
     fun pause() {
-        currentTrack?.let { track ->
-            Log.d(TAG, "pause(): приостанавливаем")
-            pendingPlay = false
-            playTrackUseCase.pause()
-            stopUpdating()
-            val position = playTrackUseCase.getCurrentPosition()
-            currentPosition = position
-            _state.value = PlayerState.Paused(track, position, isFavorite)
-        }
+        playerController?.pause()
+        playerController?.hideNotification()
     }
 
     fun stop() {
-        Log.d(TAG, "stop(): останавливаем")
-        pendingPlay = false
-        isCompleted = false
-        playTrackUseCase.stop()
-        stopUpdating()
-        isPrepared = false
-        currentPosition = 0
-        currentTrack?.let { track ->
-            _state.value = PlayerState.Content(track, isFavorite)
-        }
+        playerController?.stop()
+        playerController?.hideNotification()
     }
 
-    private fun startUpdating() {
-        stopUpdating()
-        updateJob = viewModelScope.launch {
-            while (true) {
-                delay(300)
-                currentTrack?.let { track ->
-                    if (playTrackUseCase.isPlaying()) {
-                        val position = playTrackUseCase.getCurrentPosition()
-                        currentPosition = position
-                        _state.value = PlayerState.Playing(track, position, isFavorite)
-                    } else {
-                        stopUpdating()
-                        if (!playTrackUseCase.isPlaying()) {
-                            _state.value = PlayerState.Content(track, isFavorite)
-                            playTrackUseCase.stop()
-                        }
-                    }
-                }
-            }
-        }
+    fun onUiResumed() {
+        isUiResumed = true
+        playerController?.hideNotification()
     }
 
-    private fun stopUpdating() {
-        updateJob?.cancel()
-        updateJob = null
+    fun onUiPaused() {
+        isUiResumed = false
+        val state = _state.value
+        if (state is PlayerState.Playing) {
+            playerController?.showNotification()
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
-        stopUpdating()
-        playTrackUseCase.release()
+        stateJob?.cancel()
     }
 }
