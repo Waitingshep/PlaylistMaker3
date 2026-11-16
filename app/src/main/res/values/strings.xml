@@ -83,4 +83,5 @@
     <string name="delete_track_confirmation">Хотите удалить трек?</string>
     <string name="yes">ДА</string>
     <string name="no">НЕТ</string>
+    <string name="notification_channel_name">Воспроизведение</string>
 </resources>
