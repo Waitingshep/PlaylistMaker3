@@ -63,7 +63,11 @@ class PlayerViewModel(
                     _state.value = it
                     if (it is PlayerState.Playing) {
                         currentTrack = it.track
-                        isFavorite = it.isFavorite
+                    }
+                    isFavorite = when (it) {
+                        is PlayerState.Content -> it.isFavorite
+                        is PlayerState.Playing -> it.isFavorite
+                        is PlayerState.Paused -> it.isFavorite
                     }
                 }
             }
@@ -79,6 +83,10 @@ class PlayerViewModel(
             track.isFavorite = isFavorite
             _state.value = PlayerState.Content(track, isFavorite)
         }
+    }
+
+    fun setTrackToPlay(trackUi: TrackUi) {
+        loadTrack(trackUi)
     }
 
     fun loadPlaylists() {
@@ -130,14 +138,7 @@ class PlayerViewModel(
                 }
                 isFavorite = !isFavorite
                 track.isFavorite = isFavorite
-
-                val currentState = _state.value
-                _state.value = when (currentState) {
-                    is PlayerState.Content -> PlayerState.Content(track, isFavorite)
-                    is PlayerState.Playing -> PlayerState.Playing(track, currentState.currentPosition, isFavorite)
-                    is PlayerState.Paused -> PlayerState.Paused(track, currentState.currentPosition, isFavorite)
-                    else -> PlayerState.Content(track, isFavorite)
-                }
+                playerController?.updateFavoriteState(isFavorite)
             }
         }
     }

@@ -5,13 +5,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.playlistmaker3.playlist.domain.models.Playlist
-import com.practicum.playlistmaker3.playlist.domain.usecase.DeletePlaylistUseCase
-import com.practicum.playlistmaker3.playlist.domain.usecase.DeleteTrackFromPlaylistUseCase
-import com.practicum.playlistmaker3.playlist.domain.usecase.GetPlaylistByIdUseCase
-import com.practicum.playlistmaker3.playlist.domain.usecase.GetPlaylistTracksUseCase
-import com.practicum.playlistmaker3.playlist.domain.usecase.SharePlaylistUseCase
+import com.practicum.playlistmaker3.playlist.domain.usecase.*
 import com.practicum.playlistmaker3.search.domain.models.Track
-import com.practicum.playlistmaker3.utils.SingleLiveEvent
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 
 sealed class PlaylistEvent {
@@ -32,8 +29,8 @@ class PlaylistViewModel(
     private val _state = MutableLiveData<PlaylistState>()
     val state: LiveData<PlaylistState> = _state
 
-    private val _event = SingleLiveEvent<PlaylistEvent>()
-    val event: LiveData<PlaylistEvent> = _event
+    private val _event = MutableSharedFlow<PlaylistEvent>()
+    val event: SharedFlow<PlaylistEvent> = _event
 
     private var currentPlaylist: Playlist? = null
     private var currentTracks: List<Track> = emptyList()
@@ -65,7 +62,7 @@ class PlaylistViewModel(
     fun onShareClick() {
         val tracks = currentTracks
         if (tracks.isEmpty()) {
-            _event.value = PlaylistEvent.ShowEmptyShareToast
+            viewModelScope.launch { _event.emit(PlaylistEvent.ShowEmptyShareToast) }
         } else {
             sharePlaylist()
         }
@@ -78,23 +75,22 @@ class PlaylistViewModel(
 
         val shareUseCase = SharePlaylistUseCase()
         val text = shareUseCase(playlist, tracks)
-        _event.value = PlaylistEvent.SharePlaylist(text)
+        viewModelScope.launch { _event.emit(PlaylistEvent.SharePlaylist(text)) }
     }
 
     fun deletePlaylist() {
-        _event.value = PlaylistEvent.ShowDeleteConfirmation
+        viewModelScope.launch { _event.emit(PlaylistEvent.ShowDeleteConfirmation) }
     }
 
     fun confirmDeletePlaylist() {
         viewModelScope.launch {
             val playlist = currentPlaylist ?: return@launch
             deletePlaylistUseCase(playlist.id)
-            _event.value = PlaylistEvent.PlaylistDeleted
+            _event.emit(PlaylistEvent.PlaylistDeleted)
         }
     }
 
     fun cancelDeletePlaylist() {
-        // Обработка отмены - ничего не делаем
     }
 
     fun deleteTrackFromPlaylist(trackId: Long) {

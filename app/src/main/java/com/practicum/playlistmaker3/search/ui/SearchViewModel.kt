@@ -37,6 +37,16 @@ class SearchViewModel(
         }
     }
 
+    fun clearSearch() {
+        searchJob?.cancel()
+        currentQuery = ""
+        lastQuery = ""
+        lastResult = null
+        hasSearchResults = false
+        _state.value = null
+        loadHistory()
+    }
+
     fun restoreSearchState() {
         if (hasSearchResults && lastResult != null && currentQuery.isNotEmpty()) {
             showCachedResult()
