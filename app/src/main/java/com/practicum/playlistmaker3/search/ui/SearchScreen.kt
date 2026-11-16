@@ -5,7 +5,6 @@ import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -29,15 +27,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.practicum.playlistmaker3.R
-import com.practicum.playlistmaker3.main.ui.Routes
+import com.practicum.playlistmaker3.ui.Routes
 import com.practicum.playlistmaker3.player.ui.PlayerViewModel
+import com.practicum.playlistmaker3.ui.components.EmptyPlaceholder
+import com.practicum.playlistmaker3.ui.components.TrackItem
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
@@ -88,7 +85,6 @@ fun SearchScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreenContent(
     state: SearchState?,
@@ -136,7 +132,7 @@ fun SearchScreenContent(
                     .padding(vertical = 8.dp),
                 textStyle = TextStyle(
                     fontSize = 16.sp,
-                    color = if (isDark) Color(0xFF1A1B22) else Color(0xFF1A1B22)
+                    color = Color(0xFF1A1B22)
                 ),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -153,10 +149,7 @@ fun SearchScreenContent(
                 }
             )
             if (searchQuery.isNotEmpty()) {
-                IconButton(
-                    onClick = onClearQuery,
-                    modifier = Modifier.size(16.dp)
-                ) {
+                IconButton(onClick = onClearQuery, modifier = Modifier.size(16.dp)) {
                     Image(
                         painter = painterResource(R.drawable.ic_cancel_16),
                         contentDescription = null,
@@ -170,26 +163,18 @@ fun SearchScreenContent(
         when (val s = state) {
             is SearchState.Loading -> {
                 Spacer(modifier = Modifier.height(102.dp))
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
-
             is SearchState.Content -> {
                 Spacer(modifier = Modifier.height(16.dp))
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(s.tracks) { track ->
-                        SearchTrackItem(
-                            track = track,
-                            onClick = { onTrackClick(track) }
-                        )
+                        TrackItem(track = track, onClick = { onTrackClick(track) })
                     }
                 }
             }
-
             is SearchState.History -> {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     item {
@@ -204,10 +189,7 @@ fun SearchScreenContent(
                         )
                     }
                     items(s.tracks) { track ->
-                        SearchTrackItem(
-                            track = track,
-                            onClick = { onTrackClick(track) }
-                        )
+                        TrackItem(track = track, onClick = { onTrackClick(track) })
                     }
                     item {
                         Box(
@@ -231,7 +213,6 @@ fun SearchScreenContent(
                     }
                 }
             }
-
             is SearchState.Empty -> {
                 Spacer(modifier = Modifier.height(102.dp))
                 EmptyPlaceholder(
@@ -239,7 +220,6 @@ fun SearchScreenContent(
                     iconRes = R.drawable.ic_nothing_found_120
                 )
             }
-
             is SearchState.Error -> {
                 Spacer(modifier = Modifier.height(102.dp))
                 Column(
@@ -272,110 +252,12 @@ fun SearchScreenContent(
                     }
                 }
             }
-
             else -> {}
         }
-    }
-}
-
-@Composable
-fun SearchTrackItem(
-    track: TrackUi,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 16.dp)
-            .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        AsyncImage(
-            model = track.getCoverArtwork(),
-            contentDescription = null,
-            modifier = Modifier.size(45.dp),
-            contentScale = ContentScale.Crop,
-            placeholder = painterResource(R.drawable.placeholder_cover_312),
-            error = painterResource(R.drawable.placeholder_cover_312)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = track.trackName,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "${track.artistName} • ${track.formattedTime}",
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Image(
-            painter = painterResource(R.drawable.ic_arrow_forward_24),
-            contentDescription = null,
-            modifier = Modifier.size(24.dp)
-        )
-    }
-}
-
-@Composable
-fun EmptyPlaceholder(text: String, iconRes: Int) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(120.dp)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = text, fontSize = 16.sp)
     }
 }
 
 private fun hideKeyboard(context: Context) {
     val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
     imm.hideSoftInputFromWindow((context as? ComponentActivity)?.currentFocus?.windowToken, 0)
-}
-
-
-@Preview(showBackground = true, name = "Search - Light")
-@Composable
-fun SearchScreenLightPreview() {
-    MaterialTheme {
-        SearchScreenContent(
-            state = SearchState.Empty,
-            searchQuery = "",
-            isDark = false,
-            onQueryChange = {},
-            onClearQuery = {},
-            onRetry = {},
-            onClearHistory = {},
-            onTrackClick = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "Search - Dark")
-@Composable
-fun SearchScreenDarkPreview() {
-    MaterialTheme {
-        SearchScreenContent(
-            state = SearchState.Empty,
-            searchQuery = "",
-            isDark = true,
-            onQueryChange = {},
-            onClearQuery = {},
-            onRetry = {},
-            onClearHistory = {},
-            onTrackClick = {}
-        )
-    }
 }

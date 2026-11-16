@@ -10,19 +10,18 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.isVisible
+import androidx.lifecycle.Observer
 import androidx.navigation.NavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -43,199 +42,239 @@ import java.util.Locale
 fun PlaylistScreen(
     navController: NavController,
     playlistId: Long,
+    isDark: Boolean,
     viewModel: PlaylistViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
-    val playlistState by viewModel.state.observeAsState()
-    val isDark = isSystemInDarkTheme()
+    val observerRef = remember { arrayOfNulls<Observer<PlaylistState>>(1) }
+    val rootViewRef = remember { arrayOfNulls<View>(1) }
+
+    LaunchedEffect(playlistId) {
+        if (playlistId > 0) viewModel.loadPlaylist(playlistId)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.event.collect { e ->
+            when (e) {
+                is PlaylistEvent.SharePlaylist -> {
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, e.text)
+                        type = "text/plain"
+                    }
+                    context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_via)))
+                }
+                is PlaylistEvent.ShowEmptyShareToast ->
+                    Toast.makeText(context, context.getString(R.string.no_tracks_to_share), Toast.LENGTH_SHORT).show()
+                is PlaylistEvent.ShowDeleteConfirmation -> showDeletePlaylistDialog(context, viewModel)
+                is PlaylistEvent.PlaylistDeleted -> navController.popBackStack()
+                is PlaylistEvent.NavigateBack -> navController.popBackStack()
+            }
+        }
+    }
+
+    LaunchedEffect(isDark) {
+        var attempts = 0
+        while (rootViewRef[0] == null && attempts < 10) {
+            kotlinx.coroutines.delay(10)
+            attempts++
+        }
+        val view = rootViewRef[0] ?: return@LaunchedEffect
+        val sheetColor = if (isDark) 0xFF1A1B22.toInt() else 0xFFFFFFFF.toInt()
+        val bottomSheetContainer = view.findViewById<View>(R.id.bottomSheetContainer)
+        val menuBottomSheetContainer = view.findViewById<View>(R.id.menuBottomSheetContainer)
+        bottomSheetContainer?.setBackgroundColor(sheetColor)
+        menuBottomSheetContainer?.setBackgroundColor(sheetColor)
+        (bottomSheetContainer as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(sheetColor)
+        (menuBottomSheetContainer as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(sheetColor)
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
-        LaunchedEffect(playlistId) {
-            if (playlistId > 0) viewModel.loadPlaylist(playlistId)
-        }
-
-        LaunchedEffect(Unit) {
-            viewModel.event.collect { e ->
-                when (e) {
-                    is PlaylistEvent.SharePlaylist -> {
-                        val intent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, e.text)
-                            type = "text/plain"
-                        }
-                        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_via)))
-                    }
-                    is PlaylistEvent.ShowEmptyShareToast ->
-                        Toast.makeText(context, context.getString(R.string.no_tracks_to_share), Toast.LENGTH_SHORT).show()
-                    is PlaylistEvent.ShowDeleteConfirmation -> showDeletePlaylistDialog(context, viewModel)
-                    is PlaylistEvent.PlaylistDeleted -> navController.popBackStack()
-                    is PlaylistEvent.NavigateBack -> navController.popBackStack()
+        AndroidView(
+            factory = { ctx ->
+                val parent = FrameLayout(ctx).apply {
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
                 }
-            }
-        }
+                val view = LayoutInflater.from(ctx).inflate(R.layout.fragment_playlist, parent, false)
+                parent.addView(view)
+                rootViewRef[0] = view
+                view.setBackgroundColor(0xFFFFFFFF.toInt())
 
-        key(playlistState) {
-            AndroidView(
-                factory = { ctx ->
-                    val parent = FrameLayout(ctx).apply {
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
+                val backButton = view.findViewById<ImageButton>(R.id.backButton)
+                backButton.setColorFilter(0xFF1A1B22.toInt())
+
+                val shareButton = view.findViewById<ImageButton>(R.id.shareButton)
+                val menuButton = view.findViewById<ImageButton>(R.id.menuButton)
+                val tracksRecyclerView = view.findViewById<RecyclerView>(R.id.tracksRecyclerView)
+                val bottomSheetContainer = view.findViewById<View>(R.id.bottomSheetContainer)
+                val overlay = view.findViewById<View>(R.id.overlay)
+                val menuOverlay = view.findViewById<View>(R.id.menuOverlay)
+                val menuBottomSheetContainer = view.findViewById<View>(R.id.menuBottomSheetContainer)
+                val emptyTracksLayout = view.findViewById<View>(R.id.emptyTracksLayout)
+
+                val sheetColor = if (isDark) 0xFF1A1B22.toInt() else 0xFFFFFFFF.toInt()
+                val menuTextColor = if (isDark) 0xFFFFFFFF.toInt() else 0xFF1A1B22.toInt()
+
+                bottomSheetContainer.setBackgroundColor(sheetColor)
+                menuBottomSheetContainer.setBackgroundColor(sheetColor)
+                (bottomSheetContainer as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(sheetColor)
+                (menuBottomSheetContainer as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(sheetColor)
+
+                overlay.visibility = View.GONE
+                overlay.alpha = 0f
+                menuOverlay.visibility = View.GONE
+                menuOverlay.alpha = 0f
+
+                val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetContainer).apply {
+                    state = BottomSheetBehavior.STATE_COLLAPSED
+                    isHideable = false
+                    isDraggable = true
+                    peekHeight = 200
+                }
+
+                bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+                    override fun onStateChanged(bottomSheet: View, newState: Int) {
+                        when (newState) {
+                            BottomSheetBehavior.STATE_HIDDEN -> {
+                                overlay.visibility = View.GONE
+                                overlay.alpha = 0f
+                            }
+                            BottomSheetBehavior.STATE_COLLAPSED -> {
+                                overlay.visibility = View.VISIBLE
+                                overlay.alpha = 1f
+                                view.post { calculateAndSetPeekHeight(shareButton, bottomSheetBehavior, context) }
+                            }
+                            BottomSheetBehavior.STATE_EXPANDED -> {
+                                overlay.visibility = View.VISIBLE
+                                overlay.alpha = 1f
+                            }
+                        }
+                    }
+
+                    override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                        val normalized = (slideOffset + 1) / 2
+                        overlay.alpha = normalized.coerceIn(0f, 1f)
+                        if (normalized > 0.01f) overlay.visibility = View.VISIBLE
+                    }
+                })
+
+                val menuBottomSheetBehavior = BottomSheetBehavior.from(menuBottomSheetContainer).apply {
+                    state = BottomSheetBehavior.STATE_HIDDEN
+                    isHideable = true
+                    isDraggable = true
+                    peekHeight = 400
+                }
+
+                menuBottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+                    override fun onStateChanged(bottomSheet: View, newState: Int) {
+                        when (newState) {
+                            BottomSheetBehavior.STATE_HIDDEN -> {
+                                menuOverlay.visibility = View.GONE
+                                menuOverlay.alpha = 0f
+                                bottomSheetBehavior.isDraggable = true
+                            }
+                            BottomSheetBehavior.STATE_COLLAPSED, BottomSheetBehavior.STATE_EXPANDED -> {
+                                menuOverlay.visibility = View.VISIBLE
+                                menuOverlay.alpha = 1f
+                                bottomSheetBehavior.isDraggable = false
+                                view.post {
+                                    prepareMenuHeight(
+                                        view.findViewById(R.id.playlistNameTextView),
+                                        menuBottomSheetContainer,
+                                        menuBottomSheetBehavior,
+                                        context
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                        val normalized = (slideOffset + 1) / 2
+                        menuOverlay.alpha = normalized.coerceIn(0f, 1f)
+                        if (normalized > 0.01f) menuOverlay.visibility = View.VISIBLE
+                    }
+                })
+
+                val trackAdapter = TrackAdapter(emptyList()) {  }
+                trackAdapter.setOnLongClickListener { showDeleteTrackDialog(context, viewModel, it) }
+                tracksRecyclerView.layoutManager = LinearLayoutManager(context)
+                tracksRecyclerView.adapter = trackAdapter
+
+                backButton.setOnClickListener { navController.popBackStack() }
+                shareButton.setOnClickListener { viewModel.onShareClick() }
+                menuButton.setOnClickListener {
+                    if (menuBottomSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN) {
+                        prepareMenuHeight(
+                            view.findViewById(R.id.playlistNameTextView),
+                            menuBottomSheetContainer,
+                            menuBottomSheetBehavior,
+                            context
                         )
-                    }
-                    val view = LayoutInflater.from(ctx).inflate(R.layout.fragment_playlist, parent, false)
-                    parent.addView(view)
-                    view.setBackgroundColor(0xFFFFFFFF.toInt())
-
-                    val backButton = view.findViewById<ImageButton>(R.id.backButton)
-                    if (isDark) {
-                        backButton.setColorFilter(0xFF1A1B22.toInt())
-                    }
-
-                    val shareButton = view.findViewById<ImageButton>(R.id.shareButton)
-                    val menuButton = view.findViewById<ImageButton>(R.id.menuButton)
-                    val tracksRecyclerView = view.findViewById<RecyclerView>(R.id.tracksRecyclerView)
-                    val bottomSheetContainer = view.findViewById<View>(R.id.bottomSheetContainer)
-                    val overlay = view.findViewById<View>(R.id.overlay)
-                    val menuOverlay = view.findViewById<View>(R.id.menuOverlay)
-                    val menuBottomSheetContainer = view.findViewById<View>(R.id.menuBottomSheetContainer)
-                    val emptyTracksLayout = view.findViewById<View>(R.id.emptyTracksLayout)
-
-                    overlay.visibility = View.GONE
-                    overlay.alpha = 0f
-                    menuOverlay.visibility = View.GONE
-                    menuOverlay.alpha = 0f
-
-                    val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetContainer).apply {
-                        state = BottomSheetBehavior.STATE_COLLAPSED
-                        isHideable = false
-                        isDraggable = true
-                        peekHeight = 200
-                    }
-
-                    bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-                        override fun onStateChanged(bottomSheet: View, newState: Int) {
-                            when (newState) {
-                                BottomSheetBehavior.STATE_HIDDEN -> {
-                                    overlay.visibility = View.GONE
-                                    overlay.alpha = 0f
-                                }
-                                BottomSheetBehavior.STATE_COLLAPSED -> {
-                                    overlay.visibility = View.VISIBLE
-                                    overlay.alpha = 1f
-                                    view.post { calculateAndSetPeekHeight(shareButton, bottomSheetBehavior, context) }
-                                }
-                                BottomSheetBehavior.STATE_EXPANDED -> {
-                                    overlay.visibility = View.VISIBLE
-                                    overlay.alpha = 1f
-                                }
-                            }
-                        }
-
-                        override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                            val normalized = (slideOffset + 1) / 2
-                            overlay.alpha = normalized.coerceIn(0f, 1f)
-                            if (normalized > 0.01f) overlay.visibility = View.VISIBLE
-                        }
-                    })
-
-                    val menuBottomSheetBehavior = BottomSheetBehavior.from(menuBottomSheetContainer).apply {
-                        state = BottomSheetBehavior.STATE_HIDDEN
-                        isHideable = true
-                        isDraggable = true
-                        peekHeight = 400
-                    }
-
-                    menuBottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-                        override fun onStateChanged(bottomSheet: View, newState: Int) {
-                            when (newState) {
-                                BottomSheetBehavior.STATE_HIDDEN -> {
-                                    menuOverlay.visibility = View.GONE
-                                    menuOverlay.alpha = 0f
-                                    bottomSheetBehavior.isDraggable = true
-                                }
-                                BottomSheetBehavior.STATE_COLLAPSED, BottomSheetBehavior.STATE_EXPANDED -> {
-                                    menuOverlay.visibility = View.VISIBLE
-                                    menuOverlay.alpha = 1f
-                                    bottomSheetBehavior.isDraggable = false
-                                    view.post {
-                                        prepareMenuHeight(
-                                            view.findViewById(R.id.playlistNameTextView),
-                                            menuBottomSheetContainer,
-                                            menuBottomSheetBehavior,
-                                            context
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                            val normalized = (slideOffset + 1) / 2
-                            menuOverlay.alpha = normalized.coerceIn(0f, 1f)
-                            if (normalized > 0.01f) menuOverlay.visibility = View.VISIBLE
-                        }
-                    })
-
-                    val trackAdapter = TrackAdapter(emptyList()) { }
-                    trackAdapter.setOnLongClickListener { showDeleteTrackDialog(context, viewModel, it) }
-                    tracksRecyclerView.layoutManager = LinearLayoutManager(context)
-                    tracksRecyclerView.adapter = trackAdapter
-
-                    backButton.setOnClickListener { navController.popBackStack() }
-                    shareButton.setOnClickListener { viewModel.onShareClick() }
-                    menuButton.setOnClickListener {
-                        if (menuBottomSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN) {
-                            prepareMenuHeight(
-                                view.findViewById(R.id.playlistNameTextView),
-                                menuBottomSheetContainer,
-                                menuBottomSheetBehavior,
-                                context
-                            )
-                            menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-                        } else {
-                            menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-                        }
-                    }
-
-                    val menuShareItem = menuBottomSheetContainer.findViewById<TextView>(R.id.menuShareItem)
-                    val menuEditItem = menuBottomSheetContainer.findViewById<TextView>(R.id.menuEditItem)
-                    val menuDeleteItem = menuBottomSheetContainer.findViewById<TextView>(R.id.menuDeleteItem)
-
-                    menuShareItem.setOnClickListener {
-                        viewModel.onShareClick()
+                        menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                    } else {
                         menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
                     }
-                    menuEditItem.setOnClickListener {
-                        menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-                        navController.navigate("${com.practicum.playlistmaker3.main.ui.Routes.EDIT_PLAYLIST}/$playlistId")
-                    }
-                    menuDeleteItem.setOnClickListener {
-                        menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-                        viewModel.deletePlaylist()
-                    }
+                }
 
-                    (playlistState as? PlaylistState.Content)?.let { content ->
+                val menuShareItem = menuBottomSheetContainer.findViewById<TextView>(R.id.menuShareItem)
+                val menuEditItem = menuBottomSheetContainer.findViewById<TextView>(R.id.menuEditItem)
+                val menuDeleteItem = menuBottomSheetContainer.findViewById<TextView>(R.id.menuDeleteItem)
+                val menuPlaylistName = menuBottomSheetContainer.findViewById<TextView>(R.id.menuPlaylistName)
+                val menuTrackCount = menuBottomSheetContainer.findViewById<TextView>(R.id.menuTrackCount)
+
+                menuShareItem.setTextColor(menuTextColor)
+                menuEditItem.setTextColor(menuTextColor)
+                menuDeleteItem.setTextColor(menuTextColor)
+                menuPlaylistName.setTextColor(menuTextColor)
+                menuTrackCount.setTextColor(0xFFAEAFB4.toInt())
+
+                menuShareItem.setOnClickListener {
+                    viewModel.onShareClick()
+                    menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                }
+                menuEditItem.setOnClickListener {
+                    menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                    navController.navigate("${com.practicum.playlistmaker3.ui.Routes.EDIT_PLAYLIST}/$playlistId")
+                }
+                menuDeleteItem.setOnClickListener {
+                    menuBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                    viewModel.deletePlaylist()
+                }
+
+                val observer = Observer<PlaylistState> { state ->
+                    if (state is PlaylistState.Content) {
                         displayPlaylist(
                             context = context,
                             view = view,
-                            state = content,
+                            state = state,
                             trackAdapter = trackAdapter,
                             bottomSheetBehavior = bottomSheetBehavior,
                             overlay = overlay,
                             emptyTracksLayout = emptyTracksLayout,
                             tracksRecyclerView = tracksRecyclerView
                         )
-                        updateMenuInfo(context, menuBottomSheetContainer, content)
+                        updateMenuInfo(context, menuBottomSheetContainer, state)
                     }
-
-                    parent
                 }
-            )
+                observerRef[0] = observer
+                viewModel.state.observeForever(observer)
+
+                parent
+            }
+        )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            observerRef[0]?.let { viewModel.state.removeObserver(it) }
         }
     }
 }

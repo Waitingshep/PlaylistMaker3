@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.practicum.playlistmaker3.R
-import com.practicum.playlistmaker3.main.ui.Routes
+import com.practicum.playlistmaker3.ui.Routes
 import com.practicum.playlistmaker3.playlist.domain.models.Playlist
 import org.koin.androidx.compose.koinViewModel
 

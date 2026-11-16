@@ -41,7 +41,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.practicum.playlistmaker3.R
-import com.practicum.playlistmaker3.main.ui.Routes
+import com.practicum.playlistmaker3.ui.Routes
 import com.practicum.playlistmaker3.player.service.PlayerService
 import com.practicum.playlistmaker3.playlist.domain.models.Playlist
 import com.practicum.playlistmaker3.search.domain.models.Track
@@ -215,7 +215,6 @@ fun PlayerScreenContent(
         if (currentTrack != null) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Обложка
             AsyncImage(
                 model = currentTrack.getCoverArtwork(),
                 contentDescription = null,

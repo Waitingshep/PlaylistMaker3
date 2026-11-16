@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -22,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -146,10 +146,10 @@ fun CreatePlaylistScreenContent(
                     .padding(horizontal = 4.dp, vertical = 4.dp)
             ) {
                 IconButton(onClick = onBackClick) {
-                    Image(
+                    Icon(
                         painter = painterResource(R.drawable.ic_arrow_back_24),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp)
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Text(
@@ -279,12 +279,12 @@ private fun saveImageToPrivateStorage(context: android.content.Context, sourceUr
 }
 
 
-@Preview(showBackground = true, name = "Create Playlist - Empty")
+@Preview(showBackground = true, name = "Create Playlist - Light")
 @Composable
-fun CreatePlaylistScreenEmptyPreview() {
+fun CreatePlaylistScreenLightPreview() {
     MaterialTheme {
         CreatePlaylistScreenContent(
-            state = CreatePlaylistState(),
+            state = CreatePlaylistState(name = "Мой плейлист", isCreateEnabled = true),
             onBackClick = {},
             onNameChange = {},
             onDescriptionChange = {},
@@ -294,16 +294,12 @@ fun CreatePlaylistScreenEmptyPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Create Playlist - Filled")
+@Preview(showBackground = true, name = "Create Playlist - Dark", backgroundColor = 0xFF1A1B22)
 @Composable
-fun CreatePlaylistScreenFilledPreview() {
+fun CreatePlaylistScreenDarkPreview() {
     MaterialTheme {
         CreatePlaylistScreenContent(
-            state = CreatePlaylistState(
-                name = "Мой плейлист",
-                description = "Описание плейлиста",
-                isCreateEnabled = true
-            ),
+            state = CreatePlaylistState(name = "Мой плейлист", isCreateEnabled = true),
             onBackClick = {},
             onNameChange = {},
             onDescriptionChange = {},
