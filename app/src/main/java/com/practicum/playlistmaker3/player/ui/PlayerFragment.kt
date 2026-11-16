@@ -133,17 +133,17 @@ class PlayerFragment : Fragment() {
     private fun bindPlayerService() {
         val args = arguments?.getParcelable<TrackUi>("track") ?: return
         val intent = Intent(requireContext(), PlayerService::class.java).apply {
-            putExtra("trackId", args.trackId)
-            putExtra("trackName", args.trackName)
-            putExtra("artistName", args.artistName)
-            putExtra("trackTimeMillis", args.trackTimeMillis)
-            putExtra("artworkUrl100", args.artworkUrl100)
-            putExtra("collectionName", args.collectionName)
-            putExtra("releaseDate", args.releaseDate)
-            putExtra("primaryGenreName", args.primaryGenreName)
-            putExtra("country", args.country)
-            putExtra("previewUrl", args.previewUrl)
-            putExtra("isFavorite", args.isFavorite)
+            putExtra(PlayerService.EXTRA_TRACK_ID, args.trackId)
+            putExtra(PlayerService.EXTRA_TRACK_NAME, args.trackName)
+            putExtra(PlayerService.EXTRA_ARTIST_NAME, args.artistName)
+            putExtra(PlayerService.EXTRA_TRACK_TIME_MILLIS, args.trackTimeMillis)
+            putExtra(PlayerService.EXTRA_ARTWORK_URL_100, args.artworkUrl100)
+            putExtra(PlayerService.EXTRA_COLLECTION_NAME, args.collectionName)
+            putExtra(PlayerService.EXTRA_RELEASE_DATE, args.releaseDate)
+            putExtra(PlayerService.EXTRA_PRIMARY_GENRE_NAME, args.primaryGenreName)
+            putExtra(PlayerService.EXTRA_COUNTRY, args.country)
+            putExtra(PlayerService.EXTRA_PREVIEW_URL, args.previewUrl)
+            putExtra(PlayerService.EXTRA_IS_FAVORITE, args.isFavorite)
         }
         requireContext().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }

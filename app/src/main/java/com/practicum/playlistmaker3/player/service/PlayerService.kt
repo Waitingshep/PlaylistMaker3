@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -33,6 +34,20 @@ class PlayerService : Service(), PlayerController, KoinComponent {
     companion object {
         private const val CHANNEL_ID = "player_channel"
         private const val NOTIFICATION_ID = 1
+        private const val UPDATE_INTERVAL_MS = 300L // Вынесенная константа для задержки
+
+        // Константы для ключей Intent
+        const val EXTRA_TRACK_ID = "trackId"
+        const val EXTRA_TRACK_NAME = "trackName"
+        const val EXTRA_ARTIST_NAME = "artistName"
+        const val EXTRA_TRACK_TIME_MILLIS = "trackTimeMillis"
+        const val EXTRA_ARTWORK_URL_100 = "artworkUrl100"
+        const val EXTRA_COLLECTION_NAME = "collectionName"
+        const val EXTRA_RELEASE_DATE = "releaseDate"
+        const val EXTRA_PRIMARY_GENRE_NAME = "primaryGenreName"
+        const val EXTRA_COUNTRY = "country"
+        const val EXTRA_PREVIEW_URL = "previewUrl"
+        const val EXTRA_IS_FAVORITE = "isFavorite"
     }
 
     private val playTrackUseCase: PlayTrackUseCase by inject()
@@ -57,22 +72,22 @@ class PlayerService : Service(), PlayerController, KoinComponent {
 
     override fun onBind(intent: Intent?): IBinder {
         intent?.let {
-            val trackId = it.getLongExtra("trackId", 0L)
-            val trackName = it.getStringExtra("trackName") ?: ""
-            val artistName = it.getStringExtra("artistName") ?: ""
-            val previewUrl = it.getStringExtra("previewUrl")
-            val isFavoriteExtra = it.getBooleanExtra("isFavorite", false)
+            val trackId = it.getLongExtra(EXTRA_TRACK_ID, 0L)
+            val trackName = it.getStringExtra(EXTRA_TRACK_NAME) ?: ""
+            val artistName = it.getStringExtra(EXTRA_ARTIST_NAME) ?: ""
+            val previewUrl = it.getStringExtra(EXTRA_PREVIEW_URL)
+            val isFavoriteExtra = it.getBooleanExtra(EXTRA_IS_FAVORITE, false)
 
             currentTrack = Track(
                 trackId = trackId,
                 trackName = trackName,
                 artistName = artistName,
-                trackTimeMillis = it.getLongExtra("trackTimeMillis", 0L),
-                artworkUrl100 = it.getStringExtra("artworkUrl100") ?: "",
-                collectionName = it.getStringExtra("collectionName"),
-                releaseDate = it.getStringExtra("releaseDate"),
-                primaryGenreName = it.getStringExtra("primaryGenreName"),
-                country = it.getStringExtra("country"),
+                trackTimeMillis = it.getLongExtra(EXTRA_TRACK_TIME_MILLIS, 0L),
+                artworkUrl100 = it.getStringExtra(EXTRA_ARTWORK_URL_100) ?: "",
+                collectionName = it.getStringExtra(EXTRA_COLLECTION_NAME),
+                releaseDate = it.getStringExtra(EXTRA_RELEASE_DATE),
+                primaryGenreName = it.getStringExtra(EXTRA_PRIMARY_GENRE_NAME),
+                country = it.getStringExtra(EXTRA_COUNTRY),
                 previewUrl = previewUrl,
                 isFavorite = isFavoriteExtra
             )
@@ -171,8 +186,9 @@ class PlayerService : Service(), PlayerController, KoinComponent {
     private fun startUpdating() {
         stopUpdating()
         updateJob = scope.launch {
-            while (true) {
-                delay(300)
+            // Явное условие выхода из цикла
+            while (updateJob?.isActive == true) {
+                delay(UPDATE_INTERVAL_MS)
                 currentTrack?.let { track ->
                     if (playTrackUseCase.isPlaying()) {
                         val position = playTrackUseCase.getCurrentPosition()
