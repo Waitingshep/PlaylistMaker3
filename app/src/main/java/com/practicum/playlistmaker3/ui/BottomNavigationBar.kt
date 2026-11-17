@@ -1,11 +1,27 @@
+
 package com.practicum.playlistmaker3.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
@@ -25,83 +41,129 @@ fun BottomNavigationBarContent(
     val unselectedColor = MaterialTheme.colorScheme.onSurface
     val dividerColor = MaterialTheme.colorScheme.outline
 
-    val ysDisplayRegular = FontFamily(Font(R.font.ys_display_regular, FontWeight.Normal))
+    val ysDisplayRegular = FontFamily(
+        Font(
+            R.font.ys_display_regular,
+            FontWeight.Normal
+        )
+    )
 
-    Column {
-        HorizontalDivider(thickness = 1.dp, color = dividerColor)
+    Column(
+        modifier = Modifier.windowInsetsPadding(
+            WindowInsets.navigationBars
+        )
+    ) {
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = dividerColor
+        )
+
         BottomAppBar(
-            modifier = Modifier.height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
             containerColor = backgroundColor,
-            tonalElevation = 0.dp
+            tonalElevation = 0.dp,
+            contentPadding = PaddingValues(0.dp),
+            windowInsets = WindowInsets(0, 0, 0, 0)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onNavigate(Routes.SEARCH) }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_search_mode_24),
-                        contentDescription = null,
-                        tint = if (currentRoute == Routes.SEARCH) selectedColor else unselectedColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.search),
-                        fontSize = 10.sp,
-                        fontFamily = ysDisplayRegular,
-                        fontWeight = FontWeight.Normal,
-                        color = if (currentRoute == Routes.SEARCH) selectedColor else unselectedColor
-                    )
-                }
+                BottomNavigationItem(
+                    modifier = Modifier.weight(1f),
+                    iconRes = R.drawable.ic_search_mode_24,
+                    label = stringResource(R.string.search),
+                    selected = currentRoute == Routes.SEARCH,
+                    selectedColor = selectedColor,
+                    unselectedColor = unselectedColor,
+                    fontFamily = ysDisplayRegular,
+                    onClick = {
+                        onNavigate(Routes.SEARCH)
+                    }
+                )
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onNavigate(Routes.MEDIA) }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_media_mode_24),
-                        contentDescription = null,
-                        tint = if (currentRoute == Routes.MEDIA) selectedColor else unselectedColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.media),
-                        fontSize = 10.sp,
-                        fontFamily = ysDisplayRegular,
-                        fontWeight = FontWeight.Normal,
-                        color = if (currentRoute == Routes.MEDIA) selectedColor else unselectedColor
-                    )
-                }
+                BottomNavigationItem(
+                    modifier = Modifier.weight(1f),
+                    iconRes = R.drawable.ic_media_mode_24,
+                    label = stringResource(R.string.media),
+                    selected = currentRoute == Routes.MEDIA,
+                    selectedColor = selectedColor,
+                    unselectedColor = unselectedColor,
+                    fontFamily = ysDisplayRegular,
+                    onClick = {
+                        onNavigate(Routes.MEDIA)
+                    }
+                )
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onNavigate(Routes.SETTINGS) }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_settings_mode_24),
-                        contentDescription = null,
-                        tint = if (currentRoute == Routes.SETTINGS) selectedColor else unselectedColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.settings),
-                        fontSize = 10.sp,
-                        fontFamily = ysDisplayRegular,
-                        fontWeight = FontWeight.Normal,
-                        color = if (currentRoute == Routes.SETTINGS) selectedColor else unselectedColor
-                    )
-                }
+                BottomNavigationItem(
+                    modifier = Modifier.weight(1f),
+                    iconRes = R.drawable.ic_settings_mode_24,
+                    label = stringResource(R.string.settings),
+                    selected = currentRoute == Routes.SETTINGS,
+                    selectedColor = selectedColor,
+                    unselectedColor = unselectedColor,
+                    fontFamily = ysDisplayRegular,
+                    onClick = {
+                        onNavigate(Routes.SETTINGS)
+                    }
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun BottomNavigationItem(
+    modifier: Modifier = Modifier,
+    iconRes: Int,
+    label: String,
+    selected: Boolean,
+    selectedColor: Color,
+    unselectedColor: Color,
+    fontFamily: FontFamily,
+    onClick: () -> Unit
+) {
+    val itemColor = if (selected) {
+        selectedColor
+    } else {
+        unselectedColor
+    }
+
+    Column(
+        modifier = modifier
+            .height(56.dp)
+            .clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    ) {
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
+
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = itemColor,
+            modifier = Modifier.size(24.dp)
+        )
+
+        Spacer(
+            modifier = Modifier.height(4.dp)
+        )
+
+        Text(
+            text = label,
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+            fontFamily = fontFamily,
+            fontWeight = FontWeight.Normal,
+            color = itemColor,
+            maxLines = 1
+        )
     }
 }

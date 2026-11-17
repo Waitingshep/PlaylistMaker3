@@ -1,9 +1,8 @@
+
 package com.practicum.playlistmaker3.playlist.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel
 
@@ -19,12 +18,8 @@ fun EditPlaylistScreen(
         }
     }
 
-    val state by viewModel.state.observeAsState()
-    val isLoaded = state?.let { it.playlistId == playlistId && it.name.isNotEmpty() } ?: false
-
-    if (isLoaded) {
-        CreatePlaylistScreen(navController, viewModel)
-    } else {
-        CreatePlaylistScreen(navController, viewModel)
-    }
+    CreatePlaylistScreen(
+        navController = navController,
+        viewModel = viewModel
+    )
 }

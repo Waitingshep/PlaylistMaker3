@@ -1,7 +1,10 @@
 package com.practicum.playlistmaker3.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -22,21 +25,23 @@ import com.practicum.playlistmaker3.player.ui.PlayerScreen
 import com.practicum.playlistmaker3.search.ui.SearchScreen
 import com.practicum.playlistmaker3.settings.ui.SettingsScreen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistMakerApp(isDark: Boolean) {
     val navController = rememberNavController()
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val bottomBarRoutes = listOf(Routes.SEARCH, Routes.MEDIA, Routes.SETTINGS)
+    val bottomBarRoutes = setOf(Routes.SEARCH, Routes.MEDIA, Routes.SETTINGS)
     val showBottomBar = currentRoute in bottomBarRoutes
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (showBottomBar) {
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 200))
+            ) {
                 BottomNavigationBarContent(
                     currentRoute = currentRoute,
                     onNavigate = { route ->

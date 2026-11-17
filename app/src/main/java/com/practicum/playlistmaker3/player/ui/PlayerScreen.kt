@@ -16,21 +16,45 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import com.practicum.playlistmaker3.ui.components.themedPainterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,10 +65,10 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.practicum.playlistmaker3.R
-import com.practicum.playlistmaker3.ui.Routes
 import com.practicum.playlistmaker3.player.service.PlayerService
 import com.practicum.playlistmaker3.playlist.domain.models.Playlist
 import com.practicum.playlistmaker3.search.domain.models.Track
+import com.practicum.playlistmaker3.ui.Routes
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -224,8 +248,8 @@ fun PlayerScreenContent(
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop,
-                placeholder = painterResource(R.drawable.placeholder_cover_312),
-                error = painterResource(R.drawable.placeholder_cover_312)
+                placeholder = themedPainterResource(R.drawable.placeholder_cover_312),
+                error = themedPainterResource(R.drawable.placeholder_cover_312)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -266,7 +290,7 @@ fun PlayerScreenContent(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(R.drawable.ic_add_to_playlist_51),
+                        painter = themedPainterResource(R.drawable.ic_add_to_playlist_51),
                         contentDescription = null,
                         modifier = Modifier.size(51.dp)
                     )
@@ -282,7 +306,7 @@ fun PlayerScreenContent(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(
+                        painter = themedPainterResource(
                             if (isPlaying) R.drawable.ic_pause_button_100 else R.drawable.ic_play_button_100
                         ),
                         contentDescription = null,
@@ -300,7 +324,7 @@ fun PlayerScreenContent(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(
+                        painter = themedPainterResource(
                             if (isFavorite) R.drawable.ic_favorite_filled_51 else R.drawable.ic_favorite_51
                         ),
                         contentDescription = null,
@@ -341,9 +365,25 @@ fun PlayerScreenContent(
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = onHideBottomSheet,
-            sheetState = rememberModalBottomSheetState()
+            sheetState = rememberModalBottomSheetState(),
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 32.dp, height = 4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                    )
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Text(
                     text = stringResource(R.string.add_playlist),
                     fontSize = 18.sp,
@@ -351,7 +391,7 @@ fun PlayerScreenContent(
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp)
+                        .padding(top = 30.dp)
                 )
                 Spacer(modifier = Modifier.height(28.dp))
                 Box(
@@ -409,10 +449,9 @@ fun PlaylistBottomSheetItem(playlist: Playlist, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(8.dp),
+            .clickable(onClick = onClick)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -422,17 +461,20 @@ fun PlaylistBottomSheetItem(playlist: Playlist, onClick: () -> Unit) {
                 .size(45.dp)
                 .clip(RoundedCornerShape(4.dp)),
             contentScale = ContentScale.Crop,
-            placeholder = painterResource(R.drawable.placeholder_cover_312),
-            error = painterResource(R.drawable.placeholder_cover_312)
+            placeholder = themedPainterResource(R.drawable.placeholder_cover_312),
+            error = themedPainterResource(R.drawable.placeholder_cover_312)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = playlist.name, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             Text(text = "${playlist.trackCount} треков", fontSize = 11.sp)
         }
-        IconButton(onClick = onClick) {
-            Icon(painterResource(R.drawable.ic_arrow_forward_24), contentDescription = null)
-        }
+        Icon(
+            painter = painterResource(R.drawable.ic_arrow_forward_24),
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 

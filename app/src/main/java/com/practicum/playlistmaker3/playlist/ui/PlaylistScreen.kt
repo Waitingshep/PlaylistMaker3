@@ -1,10 +1,13 @@
 package com.practicum.playlistmaker3.playlist.ui
 
 import android.content.Intent
+import androidx.activity.ComponentActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.view.Gravity
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
@@ -18,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.isVisible
@@ -31,6 +35,8 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.practicum.playlistmaker3.R
+import com.practicum.playlistmaker3.player.ui.PlayerViewModel
+import com.practicum.playlistmaker3.ui.Routes
 import com.practicum.playlistmaker3.search.ui.TrackAdapter
 import com.practicum.playlistmaker3.search.ui.TrackMapper
 import com.practicum.playlistmaker3.search.ui.TrackUi
@@ -43,7 +49,10 @@ fun PlaylistScreen(
     navController: NavController,
     playlistId: Long,
     isDark: Boolean,
-    viewModel: PlaylistViewModel = koinViewModel()
+    viewModel: PlaylistViewModel = koinViewModel(),
+    playerViewModel: PlayerViewModel = koinViewModel(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
 ) {
     val context = LocalContext.current
     val observerRef = remember { arrayOfNulls<Observer<PlaylistState>>(1) }
@@ -87,6 +96,13 @@ fun PlaylistScreen(
         menuBottomSheetContainer?.setBackgroundColor(sheetColor)
         (bottomSheetContainer as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(sheetColor)
         (menuBottomSheetContainer as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(sheetColor)
+        val sheetContent = (bottomSheetContainer as? ViewGroup)?.getChildAt(0) as? LinearLayout
+        sheetContent?.getChildAt(0)?.setBackgroundColor(
+            if (isDark) 0xFFAEAFB4.toInt() else 0xFFE6E8EB.toInt()
+        )
+        view.findViewById<TextView>(R.id.emptyTracksLayout)?.setTextColor(
+            if (isDark) 0xFFFFFFFF.toInt() else 0xFF1A1B22.toInt()
+        )
     }
 
     Box(
@@ -126,11 +142,26 @@ fun PlaylistScreen(
                 menuBottomSheetContainer.setBackgroundColor(sheetColor)
                 (bottomSheetContainer as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(sheetColor)
                 (menuBottomSheetContainer as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(sheetColor)
+                val sheetContent = (bottomSheetContainer as ViewGroup).getChildAt(0) as LinearLayout
+                sheetContent.getChildAt(0).setBackgroundColor(
+                    if (isDark) 0xFFAEAFB4.toInt() else 0xFFE6E8EB.toInt()
+                )
+                (emptyTracksLayout as TextView).setTextColor(
+                    if (isDark) 0xFFFFFFFF.toInt() else 0xFF1A1B22.toInt()
+                )
 
                 overlay.visibility = View.GONE
                 overlay.alpha = 0f
                 menuOverlay.visibility = View.GONE
                 menuOverlay.alpha = 0f
+
+                val refreshSheetHeight = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+                    if (bottomSheetContainer.height > 0 && shareButton.height > 0) {
+                        calculateAndSetPeekHeight(shareButton, BottomSheetBehavior.from(bottomSheetContainer), ctx)
+                    }
+                }
+                (bottomSheetContainer.parent as View).addOnLayoutChangeListener(refreshSheetHeight)
+                shareButton.addOnLayoutChangeListener(refreshSheetHeight)
 
                 val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetContainer).apply {
                     state = BottomSheetBehavior.STATE_COLLAPSED
@@ -203,7 +234,10 @@ fun PlaylistScreen(
                     }
                 })
 
-                val trackAdapter = TrackAdapter(emptyList()) {  }
+                val trackAdapter = TrackAdapter(emptyList(), isDark = isDark) { track ->
+                    playerViewModel.setTrackToPlay(track)
+                    navController.navigate(Routes.PLAYER)
+                }
                 trackAdapter.setOnLongClickListener { showDeleteTrackDialog(context, viewModel, it) }
                 tracksRecyclerView.layoutManager = LinearLayoutManager(context)
                 tracksRecyclerView.adapter = trackAdapter
@@ -268,6 +302,10 @@ fun PlaylistScreen(
                 viewModel.state.observeForever(observer)
 
                 parent
+            },
+            update = { parent ->
+                val recyclerView = parent.findViewById<RecyclerView>(R.id.tracksRecyclerView)
+                (recyclerView?.adapter as? TrackAdapter)?.setDarkTheme(isDark)
             }
         )
     }
@@ -281,37 +319,41 @@ fun PlaylistScreen(
 
 private fun calculateAndSetPeekHeight(
     shareButton: View,
-    bottomSheetBehavior: BottomSheetBehavior<View>,
+    bottomSheetBehavior: BottomSheetBehavior<out View>,
     context: android.content.Context
 ) {
     val shareLocation = IntArray(2)
     shareButton.getLocationOnScreen(shareLocation)
     val shareBottomY = shareLocation[1] + shareButton.height
-    val screenHeight = context.resources.displayMetrics.heightPixels
-    val spaceBelowShare = screenHeight - shareBottomY
+    val sheetParent = shareButton.rootView.findViewById<View>(R.id.bottomSheetContainer).parent as View
+    val parentLocation = IntArray(2)
+    sheetParent.getLocationOnScreen(parentLocation)
+    val parentBottomY = parentLocation[1] + sheetParent.height
+    val spaceBelowShare = parentBottomY - shareBottomY
 
-    var targetHeight = spaceBelowShare - dpToPx(context, 24)
-    val internalPadding = dpToPx(context, 36)
-    targetHeight += internalPadding
-
+    val targetHeight = spaceBelowShare - dpToPx(context, 24)
     val finalHeight = targetHeight.coerceAtLeast(dpToPx(context, 150))
     bottomSheetBehavior.peekHeight = finalHeight
+
+
 }
 
 private fun prepareMenuHeight(
     playlistNameTextView: TextView,
     menuBottomSheetContainer: View,
-    menuBottomSheetBehavior: BottomSheetBehavior<View>,
+    menuBottomSheetBehavior: BottomSheetBehavior<out View>,
     context: android.content.Context
 ) {
     val titleLocation = IntArray(2)
     playlistNameTextView.getLocationOnScreen(titleLocation)
     val titleBottomY = titleLocation[1] + playlistNameTextView.height
-    val screenHeight = context.resources.displayMetrics.heightPixels
-    val spaceBelowTitle = screenHeight - titleBottomY
-    val menuTopPadding = dpToPx(context, 4 + 12 + 8)
-    val targetHeight = spaceBelowTitle + menuTopPadding
-    val finalHeight = targetHeight.coerceAtLeast(dpToPx(context, 200))
+    val parent = menuBottomSheetContainer.parent as View
+    val parentLocation = IntArray(2)
+    parent.getLocationOnScreen(parentLocation)
+    val parentBottomY = parentLocation[1] + parent.height
+    val spaceBelowTitle = parentBottomY - titleBottomY
+    val finalHeight = (spaceBelowTitle - dpToPx(context, 4))
+        .coerceIn(0, parent.height)
 
     val params = menuBottomSheetContainer.layoutParams
     params.height = finalHeight
@@ -326,7 +368,7 @@ private fun displayPlaylist(
     view: View,
     state: PlaylistState.Content,
     trackAdapter: TrackAdapter,
-    bottomSheetBehavior: BottomSheetBehavior<View>,
+    bottomSheetBehavior: BottomSheetBehavior<out View>,
     overlay: View,
     emptyTracksLayout: View,
     tracksRecyclerView: RecyclerView
@@ -390,6 +432,15 @@ private fun displayPlaylist(
 
     emptyTracksLayout.isVisible = state.tracks.isEmpty()
     tracksRecyclerView.isVisible = state.tracks.isNotEmpty()
+
+    val sheetContent = (view.findViewById<View>(R.id.bottomSheetContainer) as ViewGroup)
+        .getChildAt(0) as LinearLayout
+    val params = sheetContent.layoutParams as FrameLayout.LayoutParams
+    if (params.height != ViewGroup.LayoutParams.WRAP_CONTENT || params.gravity != Gravity.TOP) {
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT
+        params.gravity = Gravity.TOP
+        sheetContent.layoutParams = params
+    }
 
     bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
     overlay.visibility = View.VISIBLE

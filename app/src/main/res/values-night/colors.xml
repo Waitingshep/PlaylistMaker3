@@ -26,4 +26,7 @@
     <color name="bottom_nav_line">#E6E8EB</color>
     <color name="search_text_hint_dark">#FFFFFF</color>
     <color name="button_inactive">#AEAFB4</color>
+    <color name="search_field_background">#FFFFFF</color>
+    <color name="search_field_icon">#1A1B22</color>
+    <color name="search_field_text">#1A1B22</color>
 </resources>

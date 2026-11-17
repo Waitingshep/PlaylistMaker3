@@ -1,6 +1,7 @@
 package com.practicum.playlistmaker3.search.ui
 
 import android.content.Context
+import android.graphics.Color
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -16,10 +17,11 @@ class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     private val trackTimeView: TextView = itemView.findViewById(R.id.trackTime)
     private val artworkImageView: ImageView = itemView.findViewById(R.id.artworkUrl100)
 
-    fun bind(track: TrackUi) {
+    fun bind(track: TrackUi, isDark: Boolean = false) {
         trackNameView.text = track.trackName
         artistNameView.text = track.artistName
         trackTimeView.text = track.formattedTime
+        trackNameView.setTextColor(if (isDark) Color.WHITE else Color.BLACK)
 
         val cornerRadiusInPx = dpToPx(2f, itemView.context)
         val imageUrl = track.getCoverArtwork()

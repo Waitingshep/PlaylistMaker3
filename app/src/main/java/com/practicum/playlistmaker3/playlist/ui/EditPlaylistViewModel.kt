@@ -1,8 +1,10 @@
+
 package com.practicum.playlistmaker3.playlist.ui
 
 import com.practicum.playlistmaker3.playlist.domain.models.Playlist
 import com.practicum.playlistmaker3.playlist.domain.usecase.CreatePlaylistUseCase
 import com.practicum.playlistmaker3.playlist.domain.usecase.GetPlaylistByIdUseCase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class EditPlaylistViewModel(
@@ -27,6 +29,7 @@ class EditPlaylistViewModel(
         coroutineScope.launch {
             try {
                 val playlist = getPlaylistByIdUseCase(playlistId)
+
                 if (playlist != null) {
                     existingTrackIds = playlist.trackIds
                     existingTrackCount = playlist.trackCount
@@ -39,6 +42,8 @@ class EditPlaylistViewModel(
                         coverPath = playlist.coverPath
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -48,6 +53,7 @@ class EditPlaylistViewModel(
     override fun createPlaylist() {
         val currentState = _state.value ?: return
         val name = currentState.name
+
         if (name.isBlank()) return
 
         val coverPathToSave = if (currentState.coverPath.isNullOrEmpty()) {
@@ -65,7 +71,9 @@ class EditPlaylistViewModel(
                 trackIds = existingTrackIds,
                 trackCount = existingTrackCount
             )
+
             val id = createPlaylistUseCase(playlist)
+
             _state.value = _state.value?.copy(
                 creationResult = id,
                 isDataChanged = false

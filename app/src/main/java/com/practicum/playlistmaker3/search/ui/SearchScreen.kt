@@ -5,22 +5,41 @@ import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -31,14 +50,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.practicum.playlistmaker3.R
-import com.practicum.playlistmaker3.ui.Routes
 import com.practicum.playlistmaker3.player.ui.PlayerViewModel
+import com.practicum.playlistmaker3.ui.Routes
 import com.practicum.playlistmaker3.ui.components.EmptyPlaceholder
 import com.practicum.playlistmaker3.ui.components.TrackItem
+import com.practicum.playlistmaker3.ui.components.themedPainterResource
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     navController: NavController,
@@ -49,13 +68,12 @@ fun SearchScreen(
 ) {
     val context = LocalContext.current
     val state by viewModel.state.observeAsState()
-    var searchQuery by remember { mutableStateOf("") }
-    val isDark = isSystemInDarkTheme()
-
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(Unit) {
-        viewModel.restoreSearchState()
+        if (searchQuery.isEmpty()) {
+            viewModel.restoreSearchState()
+        }
     }
-
     LaunchedEffect(searchQuery) {
         if (searchQuery.isNotEmpty()) {
             delay(300L)
@@ -64,12 +82,10 @@ fun SearchScreen(
             viewModel.loadHistory()
         }
     }
-
     SearchScreenContent(
         state = state,
         searchQuery = searchQuery,
-        isDark = isDark,
-        onQueryChange = { searchQuery = it },
+        onQueryChange = { query -> searchQuery = query },
         onClearQuery = {
             searchQuery = ""
             hideKeyboard(context)
@@ -89,16 +105,15 @@ fun SearchScreen(
 fun SearchScreenContent(
     state: SearchState?,
     searchQuery: String,
-    isDark: Boolean,
     onQueryChange: (String) -> Unit,
     onClearQuery: () -> Unit,
     onRetry: () -> Unit,
     onClearHistory: () -> Unit,
     onTrackClick: (TrackUi) -> Unit
 ) {
-    val fieldBg = if (isDark) Color.White else Color(0xFFE6E8EB)
-    val fieldText = if (isDark) Color(0xFF1A1B22) else Color(0xFF818C99)
-
+    val fieldBg = colorResource(R.color.search_field_background)
+    val fieldText = colorResource(R.color.search_field_icon)
+    val inputTextColor = colorResource(R.color.search_field_text)
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
             text = stringResource(R.string.search),
@@ -106,13 +121,9 @@ fun SearchScreenContent(
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(16.dp)
         )
-
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .height(36.dp)
-                .background(fieldBg, RoundedCornerShape(8.dp))
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                .height(36.dp).background(fieldBg, RoundedCornerShape(8.dp))
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -126,14 +137,8 @@ fun SearchScreenContent(
             BasicTextField(
                 value = searchQuery,
                 onValueChange = onQueryChange,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(36.dp)
-                    .padding(vertical = 8.dp),
-                textStyle = TextStyle(
-                    fontSize = 16.sp,
-                    color = Color(0xFF1A1B22)
-                ),
+                modifier = Modifier.weight(1f).height(36.dp).padding(vertical = 8.dp),
+                textStyle = TextStyle(fontSize = 16.sp, color = inputTextColor),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {}),
@@ -159,7 +164,6 @@ fun SearchScreenContent(
                 }
             }
         }
-
         when (val s = state) {
             is SearchState.Loading -> {
                 Spacer(modifier = Modifier.height(102.dp))
@@ -176,38 +180,37 @@ fun SearchScreenContent(
                 }
             }
             is SearchState.History -> {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    item {
-                        Text(
-                            text = stringResource(R.string.search_history_title),
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 24.dp, bottom = 16.dp)
-                        )
-                    }
-                    items(s.tracks) { track ->
-                        TrackItem(track = track, onClick = { onTrackClick(track) })
-                    }
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Button(
-                                onClick = onClearHistory,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.onSurface
-                                )
+                if (s.tracks.isNotEmpty()) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.search_history_title),
+                                fontSize = 19.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(top = 24.dp, bottom = 16.dp)
+                            )
+                        }
+                        items(s.tracks) { track ->
+                            TrackItem(track = track, onClick = { onTrackClick(track) })
+                        }
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = stringResource(R.string.clear_history),
-                                    color = MaterialTheme.colorScheme.surface
-                                )
+                                Button(
+                                    onClick = onClearHistory,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.onSurface
+                                    )
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.clear_history),
+                                        color = MaterialTheme.colorScheme.surface
+                                    )
+                                }
                             }
                         }
                     }
@@ -228,7 +231,7 @@ fun SearchScreenContent(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(R.drawable.ic_error_120),
+                        painter = themedPainterResource(R.drawable.ic_error_120),
                         contentDescription = null,
                         modifier = Modifier.size(120.dp)
                     )
@@ -259,5 +262,8 @@ fun SearchScreenContent(
 
 private fun hideKeyboard(context: Context) {
     val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-    imm.hideSoftInputFromWindow((context as? ComponentActivity)?.currentFocus?.windowToken, 0)
+    imm.hideSoftInputFromWindow(
+        (context as? ComponentActivity)?.currentFocus?.windowToken,
+        0
+    )
 }
