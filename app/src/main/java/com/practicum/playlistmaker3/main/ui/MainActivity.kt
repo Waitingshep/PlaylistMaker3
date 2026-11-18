@@ -1,39 +1,38 @@
+
 package com.practicum.playlistmaker3.main.ui
 
 import android.os.Bundle
-import android.view.View
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.setupWithNavController
-import com.practicum.playlistmaker3.R
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import com.practicum.playlistmaker3.settings.domain.models.ThemeMode
+import com.practicum.playlistmaker3.settings.ui.SettingsState
+import com.practicum.playlistmaker3.settings.ui.SettingsViewModel
+import com.practicum.playlistmaker3.ui.PlaylistMakerApp
+import com.practicum.playlistmaker3.ui.theme.PlaylistMakerTheme
+import org.koin.androidx.compose.koinViewModel
 
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var bottomNavContainer: View
+class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        bottomNavContainer = findViewById(R.id.bottomNavigationContainer)
+        setContent {
+            val settingsViewModel: SettingsViewModel = koinViewModel(
+                viewModelStoreOwner = this@MainActivity
+            )
 
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
-        val bottomNav = findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)
-        bottomNav.setupWithNavController(navController)
+            val themeState by settingsViewModel.state.observeAsState()
 
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            when (destination.id) {
-                R.id.playerFragment,
-                R.id.createPlaylistFragment,
-                R.id.playlistFragment,
-                R.id.editPlaylistFragment -> {
-                    bottomNavContainer.visibility = View.GONE
-                }
-                else -> {
-                    bottomNavContainer.visibility = View.VISIBLE
-                }
+            val isDark = when (val s = themeState) {
+                is SettingsState.ThemeLoaded -> s.mode == ThemeMode.DARK
+                else -> isSystemInDarkTheme()
+            }
+
+            PlaylistMakerTheme(darkTheme = isDark) {
+                PlaylistMakerApp(isDark = isDark)
             }
         }
     }

@@ -24,7 +24,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -34,9 +33,8 @@ class PlayerService : Service(), PlayerController, KoinComponent {
     companion object {
         private const val CHANNEL_ID = "player_channel"
         private const val NOTIFICATION_ID = 1
-        private const val UPDATE_INTERVAL_MS = 300L // Вынесенная константа для задержки
+        private const val UPDATE_INTERVAL_MS = 300L
 
-        // Константы для ключей Intent
         const val EXTRA_TRACK_ID = "trackId"
         const val EXTRA_TRACK_NAME = "trackName"
         const val EXTRA_ARTIST_NAME = "artistName"
@@ -183,10 +181,22 @@ class PlayerService : Service(), PlayerController, KoinComponent {
         }
     }
 
+    override fun updateFavoriteState(isFavorite: Boolean) {
+        this.isFavorite = isFavorite
+        currentTrack?.let { track ->
+            track.isFavorite = isFavorite
+            _state.value = when (val s = _state.value) {
+                is PlayerState.Content -> PlayerState.Content(track, isFavorite)
+                is PlayerState.Playing -> PlayerState.Playing(track, s.currentPosition, isFavorite)
+                is PlayerState.Paused -> PlayerState.Paused(track, s.currentPosition, isFavorite)
+                else -> PlayerState.Content(track, isFavorite)
+            }
+        }
+    }
+
     private fun startUpdating() {
         stopUpdating()
         updateJob = scope.launch {
-            // Явное условие выхода из цикла
             while (updateJob?.isActive == true) {
                 delay(UPDATE_INTERVAL_MS)
                 currentTrack?.let { track ->

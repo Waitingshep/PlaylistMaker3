@@ -27,13 +27,10 @@ class SettingsViewModel(
 
     fun setTheme(mode: ThemeMode) {
         setThemeUseCase(mode)
-        applyTheme(mode == ThemeMode.DARK)
-        _state.value = SettingsState.ThemeLoaded(mode)
-    }
-
-    private fun applyTheme(darkThemeEnabled: Boolean) {
         AppCompatDelegate.setDefaultNightMode(
-            if (darkThemeEnabled) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+            if (mode == ThemeMode.DARK) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
         )
+        _state.value = SettingsState.ThemeLoaded(mode)
     }
 }

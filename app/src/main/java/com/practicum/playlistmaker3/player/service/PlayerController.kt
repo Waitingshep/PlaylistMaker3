@@ -10,4 +10,5 @@ interface PlayerController {
     fun getState(): StateFlow<PlayerState?>
     fun showNotification()
     fun hideNotification()
+    fun updateFavoriteState(isFavorite: Boolean)
 }

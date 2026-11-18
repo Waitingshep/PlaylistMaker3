@@ -7,9 +7,11 @@ import com.practicum.playlistmaker3.R
 
 class TrackAdapter(
     private var tracks: List<TrackUi>,
+    private val isDark: Boolean = false,
     private val onItemClick: (TrackUi) -> Unit
 ) : RecyclerView.Adapter<TrackViewHolder>() {
 
+    private var darkTheme = isDark
     private var onLongClickListener: ((TrackUi) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrackViewHolder {
@@ -19,7 +21,7 @@ class TrackAdapter(
 
     override fun onBindViewHolder(holder: TrackViewHolder, position: Int) {
         val track = tracks[position]
-        holder.bind(track)
+        holder.bind(track, darkTheme)
         holder.itemView.setOnClickListener {
             onItemClick(track)
         }
@@ -34,6 +36,13 @@ class TrackAdapter(
     fun updateTracks(newTracks: List<TrackUi>) {
         tracks = newTracks
         notifyDataSetChanged()
+    }
+
+    fun setDarkTheme(isDark: Boolean) {
+        if (darkTheme != isDark) {
+            darkTheme = isDark
+            notifyDataSetChanged()
+        }
     }
 
     fun setOnLongClickListener(listener: (TrackUi) -> Unit) {

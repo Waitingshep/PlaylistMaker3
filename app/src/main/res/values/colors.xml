@@ -26,4 +26,9 @@
     <color name="bottom_nav_line">#E6E8EB</color>
     <color name="button_inactive">#AEAFB4</color>
     <color name="playlist_description">#1A1B22</color>
+    <color name="windowBackgroundLight">#FFFFFFFF</color>
+    <color name="windowBackgroundDark">#FF1A1B22</color>
+    <color name="search_field_background">#E6E8EB</color>
+    <color name="search_field_icon">#818C99</color>
+    <color name="search_field_text">#1A1B22</color>
 </resources>
